@@ -2,12 +2,13 @@ import React from 'react'
 import { geoPath, geoGraticule } from 'd3-geo'
 import { useMinimap } from './minimap'
 
-const Graticule = ({ step, stroke, strokeWidth, opacity }) => {
+const Graticule = ({
+  stroke,
+  strokeWidth = 0.5,
+  step = [45, 45],
+  opacity = 0.2,
+}) => {
   const { projection, width, height } = useMinimap()
-
-  step = step || [45, 45]
-  opacity = opacity || 0.2
-  strokeWidth = strokeWidth || 0.5
 
   return (
     <path

@@ -3,38 +3,27 @@ import { useRegl } from './regl'
 import { useMinimap } from './minimap'
 
 const Raster = ({ data, colormap, clim, nullValue }) => {
-	const { regl } = useRegl()
+  const { regl } = useRegl()
 
-	const { scale, translate, projectionName, projectionInvert } = useMinimap()
+  const { scale, translate, projectionName, projectionInvert } = useMinimap()
 
-	useEffect(() => {
-		const position = [
-      0.0,
-      0.0,
-      0.0,
-      1.0,
-      1.0,
-      0.0,
-      1.0,
-      0.0,
-      0.0,
-      1.0,
-      1.0,
-      1.0,
+  useEffect(() => {
+    const position = [
+      0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0,
     ]
 
-		const colormapTexture = regl.texture({
-	    data: colormap,
-	    format: 'rgb',
-	    shape: [255, 1],
-	  })
+    const colormapTexture = regl.texture({
+      data: colormap,
+      format: 'rgb',
+      shape: [255, 1],
+    })
 
-	  const texture = regl.texture()
+    const texture = regl.texture()
 
-	  texture(data['biomass'].pick(0, null, null))
+    texture(data['biomass'].pick(0, null, null))
 
-		const draw = regl({
-			vert: `
+    const draw = regl({
+      vert: `
 			#ifdef GL_FRAGMENT_PRECISION_HIGH
 		  precision highp float;
 		  #else
@@ -48,7 +37,7 @@ const Raster = ({ data, colormap, clim, nullValue }) => {
 		  }
 			`,
 
-			frag: `
+      frag: `
 			#ifdef GL_FRAGMENT_PRECISION_HIGH
 		  precision highp float;
 		  #else
@@ -101,57 +90,56 @@ const Raster = ({ data, colormap, clim, nullValue }) => {
 		  }
 			`,
 
-			attributes: {
-				position: regl.prop('position'),
-				
-			},
+      attributes: {
+        position: regl.prop('position'),
+      },
 
-			uniforms: {
-				clim: regl.prop('clim'),
-				texture: regl.prop('texture'),
-				pixelRatio: regl.context('pixelRatio'),
-				viewportWidth: regl.context('viewportWidth'),
+      uniforms: {
+        clim: regl.prop('clim'),
+        texture: regl.prop('texture'),
+        pixelRatio: regl.context('pixelRatio'),
+        viewportWidth: regl.context('viewportWidth'),
         viewportHeight: regl.context('viewportHeight'),
         scale: regl.prop('scale'),
         translate: regl.prop('translate'),
         colormap: regl.prop('colormap'),
         nullValue: regl.prop('nullValue'),
-			},
+      },
 
-			count: 6,
+      count: 6,
 
-			primitive: 'triangles'
-		})
+      primitive: 'triangles',
+    })
 
-		regl.clear({
+    regl.clear({
       color: [0, 0, 0, 0],
       depth: 1,
     })
-		
-		draw({
-			position: position, 
-			texture: texture, 
-			scale: scale, 
-			translate: translate,
-			colormap: colormapTexture,
-			clim: clim,
-			nullValue: nullValue,
-		})
 
-		regl.frame(() => {
-			draw({
-				position: position, 
-				texture: texture, 
-				scale: scale, 
-				translate: translate,
-				colormap: colormapTexture,
-				clim: clim,
-				nullValue: nullValue,
-			})
-		})
-	}, [])
+    draw({
+      position: position,
+      texture: texture,
+      scale: scale,
+      translate: translate,
+      colormap: colormapTexture,
+      clim: clim,
+      nullValue: nullValue,
+    })
 
-	return null
+    regl.frame(() => {
+      draw({
+        position: position,
+        texture: texture,
+        scale: scale,
+        translate: translate,
+        colormap: colormapTexture,
+        clim: clim,
+        nullValue: nullValue,
+      })
+    })
+  }, [])
+
+  return null
 }
 
 export default Raster

@@ -33,7 +33,6 @@ const Regl = ({ style, extensions, aspect = 1, children }) => {
       })
       setReady(true)
     }
-
   }, [])
 
   useEffect(() => {

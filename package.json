@@ -1,5 +1,5 @@
 {
-  "name": "minimaps",
+  "name": "@carbonplan/minimaps",
   "version": "1.0.0",
   "description": "small maps for figures",
   "main": "dst/index.js",

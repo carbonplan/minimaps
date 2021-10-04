@@ -1,6 +1,6 @@
 export const projections = [
-	'mercator',
-	'equirectangular',
-	'naturalEarth1',
-	'orthographic'
+  'mercator',
+  'equirectangular',
+  'naturalEarth1',
+  'orthographic',
 ]
