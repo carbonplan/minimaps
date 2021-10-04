@@ -17,7 +17,7 @@
 ## example
 
 ```jsx
-import { Minimap, Raster, Line } from '@carbonplan/minimaps'
+import { Minimap, Raster, Path, Sphere, Graticule } from '@carbonplan/minimaps'
 
 <Minimap projection='naturalEarth1'>
   <Path
