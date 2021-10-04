@@ -9,7 +9,18 @@ const Raster = ({ data, colormap, clim, nullValue }) => {
 
   useEffect(() => {
     const position = [
-      0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
     ]
 
     const colormapTexture = regl.texture({
