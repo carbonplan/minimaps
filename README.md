@@ -14,6 +14,8 @@
 [github-badge]: https://badgen.net/badge/-/github?icon=github&label
 [mit license]: https://badgen.net/badge/license/MIT/blue
 
+_Note: Work in progress!_
+
 ## example
 
 ```jsx
