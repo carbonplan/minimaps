@@ -21,20 +21,22 @@ _Note: Work in progress!_
 ```jsx
 import { Minimap, Raster, Path, Sphere, Graticule } from '@carbonplan/minimaps'
 
-;<Minimap projection='naturalEarth1'>
-  <Path
-    stroke={'white'}
-    source={'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'}
-    variable={'land'}
-  />
-  <Graticule stroke={'white'} />
-  <Sphere fill={'black'} />
-  <Raster
-    source={
-      'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/2880px-Blue_Marble_2002.png'
-    }
-  />
-</Minimap>
+return (
+  <Minimap projection='naturalEarth1'>
+    <Path
+      stroke={'white'}
+      source={'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'}
+      variable={'land'}
+    />
+    <Graticule stroke={'white'} />
+    <Sphere fill={'black'} />
+    <Raster
+      source={
+        'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/2880px-Blue_Marble_2002.png'
+      }
+    />
+  </Minimap>
+)
 ```
 
 ## license
