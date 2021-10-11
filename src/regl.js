@@ -37,7 +37,9 @@ const Regl = ({ style, extensions, aspect = 1, children }) => {
 
   useEffect(() => {
     return () => {
-      if (regl.current) regl.current.destroy()
+      if (regl.current) {
+        regl.current.destroy()
+      }
       setReady(false)
     }
   }, [])

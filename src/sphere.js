@@ -2,7 +2,7 @@ import React from 'react'
 import { geoPath } from 'd3-geo'
 import { useMinimap } from './minimap'
 
-const Sphere = ({ fill, stroke, strokeWidth = 0.5, opacity = 0.7 }) => {
+const Sphere = ({ fill, stroke, strokeWidth = 0.5, opacity = 0.2 }) => {
   const { projection, width, height } = useMinimap()
 
   return (
@@ -33,7 +33,7 @@ const Sphere = ({ fill, stroke, strokeWidth = 0.5, opacity = 0.7 }) => {
           strokeWidth={strokeWidth}
           opacity={opacity}
           style={{
-            vectorEffects: 'non-scaling-stroke',
+            vectorEffect: 'non-scaling-stroke',
           }}
           d={geoPath(projection)({ type: 'Sphere' })}
         />

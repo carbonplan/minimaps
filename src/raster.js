@@ -1,11 +1,45 @@
-import React, { useEffect } from 'react'
+import React, { useState, useEffect, useRef } from 'react'
 import { useRegl } from './regl'
 import { useMinimap } from './minimap'
 
-const Raster = ({ data, colormap, clim, nullValue }) => {
+const Raster = ({
+  source,
+  mode = 'rgb',
+  format,
+  colormap,
+  clim,
+  nullValue,
+}) => {
   const { regl } = useRegl()
+  const { scale, translate, projection } = useMinimap()
 
-  const { scale, translate, projectionName, projectionInvert } = useMinimap()
+  const draw = useRef()
+  const texture = useRef()
+  const lut = useRef()
+
+  texture.current = regl.texture({
+    width: 1,
+    height: 1,
+    data: [-999, -999, -999, 0],
+  })
+  lut.current = regl.texture()
+
+  useEffect(() => {
+    const image = document.createElement('img')
+    image.src = source
+    image.crossOrigin = 'anonymous'
+    image.onload = function () {
+      texture.current(image)
+      draw.current({
+        texture: texture.current,
+        lut: lut.current,
+        scale,
+        translate,
+        clim,
+        nullValue,
+      })
+    }
+  }, [source])
 
   useEffect(() => {
     const position = [
@@ -23,17 +57,26 @@ const Raster = ({ data, colormap, clim, nullValue }) => {
       1.0,
     ]
 
-    const colormapTexture = regl.texture({
-      data: colormap,
-      format: 'rgb',
-      shape: [255, 1],
-    })
+    const uniforms = {
+      pixelRatio: regl.context('pixelRatio'),
+      viewportWidth: regl.context('viewportWidth'),
+      viewportHeight: regl.context('viewportHeight'),
+      texture: regl.prop('texture'),
+      scale: regl.prop('scale'),
+      translate: regl.prop('translate'),
+      transpose: regl.prop('transpose'),
+    }
 
-    const texture = regl.texture()
+    if (mode === 'lut') {
+      uniforms = {
+        ...uniforms,
+        lut: regl.prop('lut'),
+        clim: regl.prop('clim'),
+        nullValue: regl.prop('nullValue'),
+      }
+    }
 
-    texture(data['biomass'].pick(0, null, null))
-
-    const draw = regl({
+    draw.current = regl({
       vert: `
 			#ifdef GL_FRAGMENT_PRECISION_HIGH
 		  precision highp float;
@@ -62,15 +105,21 @@ const Raster = ({ data, colormap, clim, nullValue }) => {
 		  uniform float pixelRatio;
 		  uniform float scale;
 		  uniform vec2 translate;
-		  uniform sampler2D colormap;
-		  uniform float nullValue;
-		  uniform vec3 nullColor;
+		  uniform bool transpose;
+		  ${mode === 'lut' ? 'uniform sampler2D lut;' : ''}
+		  ${mode === 'lut' ? 'uniform float nullValue;' : ''}
+		  ${mode === 'lut' ? 'uniform vec3 nullColor;' : ''}
 
 		  const float pi = 3.14159265358979323846264;
 			const float halfPi = pi * 0.5;
 			const float twoPi = pi * 2.0;
 
-		  ${projectionInvert}
+			bool isnan(float val)
+			{
+			  return ( val < 0.0 || 0.0 < val || val == 0.0 ) ? false : true;
+			}
+
+		  ${projection.glsl.func}
 		  void main() {
 		  	
 		  	float width = viewportWidth / pixelRatio;
@@ -81,41 +130,47 @@ const Raster = ({ data, colormap, clim, nullValue }) => {
 		  	vec2 delta = vec2((1.0 + translate.x) * width / 2.0, (1.0 + translate.y) * height / 2.0);
 
 		  	x = (x - delta.x) / (scale * (width / (pi * 2.0)));
-		  	y = (delta.y - (height - y)) / (scale * (width / (pi * 2.0)));
+		  	y = (delta.y - y) / (scale * (width / (pi * 2.0)));
 
-		  	vec2 lookup = ${projectionName}Invert(x, y);
+		  	vec2 lookup = ${projection.glsl.name}(x, y);
 
-		  	lookup = vec2((radians(lookup.y) + halfPi - radians(30.0)) / (pi - radians(30.0 + 10.0)), (radians(lookup.x) + pi) / twoPi);
+		  	lookup = vec2((radians(lookup.x) + pi) / twoPi, (radians(lookup.y) + halfPi) / (pi));
 
-		  	float value = texture2D(texture, lookup).x;
+		  	vec4 value = texture2D(texture, lookup);
 		  	
-		  	vec4 c;
+		  	${
+          mode === 'lut'
+            ? `
+		  		vec4 c;
+			  	if (value.x == nullValue || isnan(value.x)) {
+			  		gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+			  	} else {
+			  		float rescaled = (value.x - clim.x)/(clim.y - clim.x);
+			  		c = texture2D(lut, vec2(rescaled, 1.0));  
+			  		gl_FragColor = vec4(c.x, c.y, c.z, 1.0);
+			  	}`
+            : ''
+        }
 
-		  	if (value == nullValue) {
-		  		gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
-		  	} else {
-		  		float rescaled = (value - clim.x)/(clim.y - clim.x);
-		  		c = texture2D(colormap, vec2(rescaled, 1.0));  
-		  		gl_FragColor = vec4(c.x, c.y, c.z, 1.0);
-		  	}
+		  	${
+          mode === 'rgb'
+            ? `
+		  		if (value.x == -999.0) {
+		  			gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
+		  		} else {
+		  			gl_FragColor = vec4(value.x , value.y, value.z, 1.0);
+		  		}
+		  	`
+            : ''
+        }
 		  }
 			`,
 
       attributes: {
-        position: regl.prop('position'),
+        position: position,
       },
 
-      uniforms: {
-        clim: regl.prop('clim'),
-        texture: regl.prop('texture'),
-        pixelRatio: regl.context('pixelRatio'),
-        viewportWidth: regl.context('viewportWidth'),
-        viewportHeight: regl.context('viewportHeight'),
-        scale: regl.prop('scale'),
-        translate: regl.prop('translate'),
-        colormap: regl.prop('colormap'),
-        nullValue: regl.prop('nullValue'),
-      },
+      uniforms: uniforms,
 
       count: 6,
 
@@ -126,29 +181,23 @@ const Raster = ({ data, colormap, clim, nullValue }) => {
       color: [0, 0, 0, 0],
       depth: 1,
     })
-
-    draw({
-      position: position,
-      texture: texture,
-      scale: scale,
-      translate: translate,
-      colormap: colormapTexture,
-      clim: clim,
-      nullValue: nullValue,
-    })
-
-    regl.frame(() => {
-      draw({
-        position: position,
-        texture: texture,
-        scale: scale,
-        translate: translate,
-        colormap: colormapTexture,
-        clim: clim,
-        nullValue: nullValue,
-      })
-    })
   }, [])
+
+  useEffect(() => {
+    // const lut = regl.texture({
+    //    data: useColormap(colormap),
+    //    format: 'rgb',
+    //    shape: [255, 1],
+    //  })
+    draw.current({
+      texture: texture.current,
+      lut: lut.current,
+      scale,
+      translate,
+      clim,
+      nullValue,
+    })
+  }, [clim, mode, scale, translate, clim, colormap, nullValue])
 
   return null
 }

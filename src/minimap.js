@@ -1,5 +1,4 @@
 import React, { useState, useRef, createContext, useContext } from 'react'
-import { projections } from './projections'
 import Regl from './regl'
 
 const MinimapContext = createContext(null)
@@ -20,40 +19,21 @@ const Minimap = ({
   scale = 1,
   translate = [0, 0],
 }) => {
-  const projectionName = projection
-  if (!projections.includes(projectionName)) {
-    throw new Error(`projection '${projectionName}' not supported`)
-  }
-
-  let _projection = useRef()
-  let _projectionInvert = useRef()
   const width = 800
   const height = aspect * width
 
-  const [ready, setReady] = useState(false)
+  projection.scale(scale * (width / (2 * Math.PI)))
+  projection.translate([
+    ((1 + translate[0]) * width) / 2,
+    ((1 + translate[1]) * height) / 2,
+  ])
 
-  import('d3-geo').then((m) => {
-    const name =
-      'geo' + projection.charAt(0).toUpperCase() + projection.slice(1)
-    _projection.current = m[name]()
-    _projection.current.scale(scale * (width / (2 * Math.PI)))
-    _projection.current.translate([
-      ((1 + translate[0]) * width) / 2,
-      ((1 + translate[1]) * height) / 2,
-    ])
-    setReady(true)
-    import('glsl-geo-projection').then((m2) => {
-      _projectionInvert.current = m2[projection + 'Invert']
-      setReady(true)
-    })
-  })
+  // figure out default scale and aspect scale based on projection id
 
   return (
     <MinimapContext.Provider
       value={{
-        projection: _projection.current,
-        projectionInvert: _projectionInvert.current,
-        projectionName: projectionName,
+        projection: projection,
         translate: translate,
         scale: scale,
         aspect: aspect,
@@ -91,7 +71,7 @@ const Minimap = ({
               pointerEvents: 'none',
             }}
           >
-            {ready && children}
+            {children}
           </svg>
         </Regl>
       </div>

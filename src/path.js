@@ -1,11 +1,11 @@
 import React, { useEffect, useState } from 'react'
 import { geoPath } from 'd3-geo'
-import { feature } from 'topojson-client'
+import { feature as topoFeature } from 'topojson-client'
 import { useMinimap } from './minimap'
 
 const Path = ({
   source,
-  variable,
+  feature,
   fill = 'none',
   stroke = 'none',
   strokeWidth = 0.5,
@@ -19,7 +19,7 @@ const Path = ({
       .then((response) => response.json())
       .then((topology) => {
         setPath(
-          geoPath(projection)(feature(topology, topology.objects[variable]))
+          geoPath(projection)(topoFeature(topology, topology.objects[feature]))
         )
       })
   }, [source])
@@ -32,7 +32,7 @@ const Path = ({
       opacity={opacity}
       strokeWidth={strokeWidth}
       style={{
-        vectorEffects: 'non-scaling-stroke',
+        vectorEffect: 'non-scaling-stroke',
       }}
     />
   )

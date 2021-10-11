@@ -1,0 +1,33 @@
+{
+  "name": "@carbonplan/design",
+  "version": "1.0.0",
+  "description": "demo of carbonplan theme and components",
+  "main": "index.js",
+  "scripts": {
+    "dev": "next dev -p 3000",
+    "build": "next build",
+    "start": "next start",
+    "format": "prettier --write '{src,pages,components}/**/*.js'"
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/carbonplan/design.git"
+  },
+  "author": "freeman-lab",
+  "license": "MIT",
+  "dependencies": {
+    "@carbonplan/components": "^10.2.0",
+    "@carbonplan/theme": "^7.0.0",
+    "@carbonplan/prism": "^1.0.4",
+    "@mdx-js/loader": "^1.6.22",
+    "@next/mdx": "^11.1.2",
+    "@theme-ui/color": "^0.11.3",
+    "next": "^11.1.2",
+    "react": "^17.0.2",
+    "react-dom": "^17.0.2",
+    "theme-ui": "^0.11.3"
+  },
+  "devDependencies": {
+    "prettier": "^2.2.1"
+  }
+}

@@ -10,15 +10,24 @@ const Graticule = ({
 }) => {
   const { projection, width, height } = useMinimap()
 
+  const eps = projection.id === 'mercator' ? 0 : 0.1
+
   return (
     <path
-      d={geoPath(projection)(geoGraticule().step(step)())}
+      d={geoPath(projection)(
+        geoGraticule()
+          .step(step)
+          .extentMajor([
+            [-180 - eps, -90 - eps],
+            [180 + eps, 90 + eps],
+          ])()
+      )}
       stroke={stroke}
       fill={'none'}
       opacity={opacity}
       strokeWidth={strokeWidth}
       style={{
-        vectorEffects: 'non-scaling-stroke',
+        vectorEffect: 'non-scaling-stroke',
       }}
     />
   )

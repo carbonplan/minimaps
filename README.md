@@ -19,14 +19,21 @@ _Note: Work in progress!_
 ## example
 
 ```jsx
-import { Minimap, Raster, Path, Sphere, Graticule } from '@carbonplan/minimaps'
+import {
+  Minimap,
+  Raster,
+  Path,
+  Sphere,
+  Graticule,
+  naturalEarth1,
+} from '@carbonplan/minimaps'
 
 return (
-  <Minimap projection='naturalEarth1'>
+  <Minimap projection={naturalEarth1}>
     <Path
       stroke={'white'}
       source={'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'}
-      variable={'land'}
+      feature={'land'}
     />
     <Graticule stroke={'white'} />
     <Sphere fill={'black'} />
@@ -34,6 +41,8 @@ return (
       source={
         'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/2880px-Blue_Marble_2002.png'
       }
+      format={}
+      variable={'emissions'}
     />
   </Minimap>
 )

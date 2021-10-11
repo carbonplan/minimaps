@@ -4,9 +4,15 @@
   "description": "small maps for figures",
   "main": "dst/index.js",
   "module": "dst/index.esm.js",
+  "exports": {
+    ".": "dst/index.modern.js",
+    "./projections": "dst/projections.modern.js"
+  },
   "scripts": {
-    "build": "rimraf dst && microbundle src/index.js -o dst/index.js --no-compress --jsx React.createElement -f modern,es,cjs --jsxFragment React.Fragment",
-    "watch": "microbundle watch src/index.js -o dst/index.js --no-compress --jsx React.createElement -f modern,es,cjs --jsxFragment React.Fragment",
+    "build": "rimraf dst && npm run build-core && npm run build-projections",
+    "build-core": "microbundle src/index.js -o dst/index.js -f modern,es,cjs --jsx React.createElement --jsxFragment React.Fragment",
+    "build-projections": "microbundle src/projections/index.js -o dst/projections.js -f modern,es,cjs --jsx React.createElement --jsxFragment React.Fragment",
+    "watch": "microbundle watch src/index.js -o dst/index.js --no-compress -f modern,es,cjs --jsx React.createElement --jsxFragment React.Fragment",
     "format": "prettier --write 'src/**/*.js'"
   },
   "repository": {
@@ -31,7 +37,7 @@
   ],
   "dependencies": {
     "d3-geo": "^2.0.1",
-    "glsl-geo-projection": "^1.0.0",
+    "glsl-geo-projection": "^1.0.1",
     "regl": "^2.1.0",
     "topojson-client": "^3.1.0"
   },
