@@ -34,7 +34,18 @@ const Raster = ({
 
   useEffect(() => {
     const position = [
-      0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0,
+      0.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      0.0,
+      1.0,
+      0.0,
+      0.0,
+      1.0,
+      1.0,
+      1.0,
     ]
 
     let uniforms = {
@@ -164,14 +175,15 @@ const Raster = ({
   }, [])
 
   const redraw = () => {
-    if (draw.current) draw.current({
-      texture: texture.current,
-      lut: lut.current,
-      scale,
-      translate,
-      clim,
-      nullValue,
-    })
+    if (draw.current)
+      draw.current({
+        texture: texture.current,
+        lut: lut.current,
+        scale,
+        translate,
+        clim,
+        nullValue,
+      })
   }
 
   useEffect(() => {
@@ -188,10 +200,10 @@ const Raster = ({
 
   useEffect(() => {
     lut.current = regl.texture({
-       data: colormap,
-       format: 'rgb',
-       shape: [255, 1],
-     })
+      data: colormap,
+      format: 'rgb',
+      shape: [255, 1],
+    })
     redraw()
   }, [colormap])
 

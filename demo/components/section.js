@@ -16,9 +16,9 @@ const transform = (src) => {
 
 const datasets = {
   'land-50m.json': 'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json',
-  'blue-marble.png': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/2880px-Blue_Marble_2002.png'
+  'blue-marble.png':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/2880px-Blue_Marble_2002.png',
 }
-
 
 const Section = ({ children, name }) => {
   const { theme } = useThemeUI()
@@ -28,7 +28,7 @@ const Section = ({ children, name }) => {
     datasets,
     ...minimaps,
     ...minimapsProjections,
-    ...theme.colors
+    ...theme.colors,
   }
 
   const components = {
