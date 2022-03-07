@@ -22,7 +22,7 @@ const Path = ({
           geoPath(projection)(topoFeature(topology, topology.objects[feature]))
         )
       })
-  }, [source])
+  }, [source, projection])
 
   return (
     <path

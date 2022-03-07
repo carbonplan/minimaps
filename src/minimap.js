@@ -26,7 +26,6 @@ const Minimap = ({
   id,
   tabIndex,
   className,
-  extensions,
   children,
   projection,
   style,
@@ -34,15 +33,16 @@ const Minimap = ({
   scale,
   translate = [0, 0],
 }) => {
+  const _projection = Object.assign({}, projection)
 
-  const scaleProp = scale || DEFAULTS[projection.id].scale
-  const aspectProp = aspect || DEFAULTS[projection.id].aspect
+  const scaleProp = scale || DEFAULTS[_projection.id].scale
+  const aspectProp = aspect || DEFAULTS[_projection.id].aspect
 
   const width = 800
   const height = aspectProp * width
 
-  projection.scale(scaleProp * (width / (2 * Math.PI)))
-  projection.translate([
+  _projection.scale(scaleProp * (width / (2 * Math.PI)))
+  _projection.translate([
     ((1 + translate[0]) * width) / 2,
     ((1 + translate[1]) * height) / 2,
   ])
@@ -50,7 +50,7 @@ const Minimap = ({
   return (
     <MinimapContext.Provider
       value={{
-        projection: projection,
+        projection: _projection,
         translate: translate,
         scale: scaleProp,
         aspect: aspectProp,
@@ -70,7 +70,6 @@ const Minimap = ({
         }}
       >
         <Regl
-          extensions={extensions}
           aspect={aspectProp}
           style={{
             pointerEvents: 'none',

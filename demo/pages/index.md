@@ -15,13 +15,14 @@ Demo of our library for making small maps.
   <Sphere fill={background} />
   <Raster
     source={datasets['blue-marble.png']}
+    transpose
   />
 </Minimap>
 ```
 
 ```jsx live
 () => {
-  const colormap = useThemedColormap('warm')
+  const colormap = useThemedColormap('fire')
 
   return (
     <Minimap projection={naturalEarth1}>
@@ -33,10 +34,12 @@ Demo of our library for making small maps.
     />
     <Sphere fill={background} />
     <Raster
+      clim={[0, 50000000]}
       mode='lut'
-      clim={[0.1, 1]}
+      nullValue={9.969209968386869e36}
+      source={datasets['total_emissions.zarr']}
+      variable={'emissions'}
       colormap={colormap}
-      source={datasets['blue-marble.png']}
     />
     </Minimap>
   )

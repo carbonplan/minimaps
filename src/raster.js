@@ -1,13 +1,17 @@
 import React, { useState, useEffect, useRef } from 'react'
+import { extname } from 'path'
 import { useRegl } from './regl'
 import { useMinimap } from './minimap'
+import zarr from 'zarr-js'
 
 const Raster = ({
   source,
+  variable,
   mode = 'rgb',
   format,
   colormap,
   clim,
+  transpose,
   nullValue = -999,
 }) => {
   const { regl } = useRegl()
@@ -107,14 +111,20 @@ const Raster = ({
         float x = gl_FragCoord.x / pixelRatio;
         float y = gl_FragCoord.y / pixelRatio;
 
-        vec2 delta = vec2((1.0 + translate.x) * width / 2.0, (1.0 + translate.y) * height / 2.0);
+        vec2 delta = vec2((1.0 + translate.x) * width / 2.0, (1.0 - translate.y) * height / 2.0);        
 
         x = (x - delta.x) / (scale * (width / (pi * 2.0)));
-        y = (delta.y - y) / (scale * (width / (pi * 2.0)));
+        ${transpose ?
+          `y = (delta.y - y) / (scale * (width / (pi * 2.0)));` :
+          `y = (y - delta.y) / (scale * (width / (pi * 2.0)));`
+        }
 
         vec2 lookup = ${projection.glsl.name}(x, y);
 
-        lookup = vec2((radians(lookup.x) + pi) / twoPi, (radians(lookup.y) + halfPi) / (pi));
+        ${transpose ? 
+          `lookup = vec2((radians(lookup.x) + pi) / twoPi, (radians(lookup.y) + halfPi) / (pi));` :
+          `lookup = vec2((radians(lookup.y) + halfPi) / (pi), (radians(lookup.x) + pi) / twoPi);`
+        }
 
         vec4 value = texture2D(texture, lookup);
         
@@ -164,34 +174,56 @@ const Raster = ({
   }, [])
 
   const redraw = () => {
-    if (draw.current) draw.current({
-      texture: texture.current,
-      lut: lut.current,
-      scale,
-      translate,
-      clim,
-      nullValue,
-    })
+    if (draw.current)
+      draw.current({
+        texture: texture.current,
+        lut: lut.current,
+        scale,
+        translate,
+        clim,
+        nullValue,
+      })
   }
 
   useEffect(() => {
-    const image = document.createElement('img')
-    image.src = source
-    image.crossOrigin = 'anonymous'
-    image.onload = function () {
-      setTimeout(() => {
-        texture.current(image)
-        redraw()
-      }, 0)
+    const ext = extname(source)
+
+    // handle images
+    if (['.png', '.jpg', '.jpeg'].includes(ext)) {
+      const image = document.createElement('img')
+      image.src = source
+      image.crossOrigin = 'anonymous'
+      image.onload = function () {
+        setTimeout(() => {
+          texture.current(image)
+          redraw()
+        }, 0)
+      }
+    }
+
+    // handle zarr groups and arrays
+    if (ext === '.zarr') {
+      if (variable) {
+        zarr().loadGroup(source, (error, data, metadata) => {
+          texture.current(data[variable])
+          redraw()
+        })
+      } else {
+        zarr().load(source, (error, data) => {
+          texture.current(data)
+          redraw()
+        })
+      }
+      
     }
   }, [source])
 
   useEffect(() => {
     lut.current = regl.texture({
-       data: colormap,
-       format: 'rgb',
-       shape: [255, 1],
-     })
+      data: colormap,
+      format: 'rgb',
+      shape: [255, 1],
+    })
     redraw()
   }, [colormap])
 

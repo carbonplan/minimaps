@@ -14,7 +14,7 @@ export const useRegl = () => {
   return useContext(ReglContext)
 }
 
-const Regl = ({ style, extensions, aspect = 1, children }) => {
+const Regl = ({ style, aspect, children }) => {
   const regl = useRef()
   const [ready, setReady] = useState(false)
 
@@ -27,19 +27,18 @@ const Regl = ({ style, extensions, aspect = 1, children }) => {
         resize()
       })
       resize()
+      console.log('creating context')
       regl.current = _regl({
         container: node,
         extensions: ['OES_texture_float', 'OES_element_index_uint'],
       })
       setReady(true)
     }
-  }, [])
+  }, [aspect])
 
   useEffect(() => {
     return () => {
-      if (regl.current) {
-        regl.current.destroy()
-      }
+      if (regl.current) regl.current.destroy()
       setReady(false)
     }
   }, [])

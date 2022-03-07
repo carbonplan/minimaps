@@ -17,7 +17,10 @@ const transform = (src) => {
 
 const datasets = {
   'land-50m.json': 'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json',
-  'blue-marble.png': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/2880px-Blue_Marble_2002.png'
+  'blue-marble.png':
+    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/2880px-Blue_Marble_2002.png',
+  'total_emissions.zarr':
+    'https://carbonplan-climatetrace.s3.us-west-2.amazonaws.com/v0.4/blog/total_emissions.zarr'
 }
 
 const Section = ({ children, name }) => {
@@ -46,7 +49,7 @@ const Section = ({ children, name }) => {
 
   return (
     <MDXProvider components={components}>
-      <Layout>
+      <Layout title='Minimaps – CarbonPlan' description='Demo of our minimaps library.'>
         <Row>
           <Column start={[1, 2, 3, 3]} width={[6]} sx={{ mb: [8, 8, 9, 10] }}>
             {children}
