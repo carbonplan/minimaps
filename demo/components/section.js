@@ -2,6 +2,7 @@ import { MDXProvider } from '@mdx-js/react'
 import { useThemeUI, Box } from 'theme-ui'
 import { Layout, Row, Column } from '@carbonplan/components'
 import { Code, LiveCode, Pre } from '@carbonplan/prism'
+import { useThemedColormap } from '@carbonplan/colormaps'
 
 import * as minimaps from '@carbonplan/minimaps'
 import * as minimapsProjections from '@carbonplan/minimaps/projections'
@@ -19,7 +20,6 @@ const datasets = {
   'blue-marble.png': 'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/2880px-Blue_Marble_2002.png'
 }
 
-
 const Section = ({ children, name }) => {
   const { theme } = useThemeUI()
 
@@ -28,7 +28,8 @@ const Section = ({ children, name }) => {
     datasets,
     ...minimaps,
     ...minimapsProjections,
-    ...theme.colors
+    ...theme.colors,
+    useThemedColormap
   }
 
   const components = {

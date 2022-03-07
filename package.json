@@ -1,19 +1,33 @@
 {
   "name": "@carbonplan/minimaps",
-  "version": "1.0.0-develop.0",
+  "type": "module",
+  "version": "1.0.0-develop.1",
   "description": "small maps for figures",
-  "main": "dst/index.js",
-  "module": "dst/index.esm.js",
-  "exports": {
-    ".": "dst/index.modern.js",
-    "./projections": "dst/projections.modern.js"
-  },
+  "main": "dst/index.cjs",
+  "module": "dst/index.module.js",
+  "source": "src/index.js",
   "scripts": {
-    "build": "rimraf dst && npm run build-core && npm run build-projections",
-    "build-core": "microbundle src/index.js -o dst/index.js -f modern,es,cjs --jsx React.createElement --jsxFragment React.Fragment",
-    "build-projections": "microbundle src/projections/index.js -o dst/projections.js -f modern,es,cjs --jsx React.createElement --jsxFragment React.Fragment",
-    "watch": "microbundle watch src/index.js -o dst/index.js --no-compress -f modern,es,cjs --jsx React.createElement --jsxFragment React.Fragment",
+    "build": "npm-run-all --parallel build:*",
+    "build:core": "rimraf dst && microbundle build --jsx React.createElement --jsxFragment React.Fragment -f modern,es,cjs",
+    "build:projections": "rimraf projections/dst && microbundle --cwd projections --jsx React.createElement --jsxFragment React.Fragment -f modern,es,cjs ",
+    "watch": "microbundle watch --jsx React.createElement --jsxFragment React.Fragment -f modern,es,cjs",
     "format": "prettier --write 'src/**/*.js'"
+  },
+  "files": [
+    "projections/dst",
+    "dst",
+    "README.md",
+    "package.json"
+  ],
+  "exports": {
+    ".": {
+        "require": "./dst/index.cjs",
+        "default": "./dst/index.modern.js"
+    },
+    "./projections": {
+        "require": "./projections/dst/index.cjs",
+        "default": "./projections/dst/index.modern.js"
+    }
   },
   "repository": {
     "type": "git",
@@ -32,9 +46,6 @@
   "bugs": {
     "url": "https://github.com/carbonplan/minimaps/issues"
   },
-  "files": [
-    "dst"
-  ],
   "dependencies": {
     "d3-geo": "^2.0.1",
     "glsl-geo-projection": "^1.0.1",
@@ -47,8 +58,9 @@
     "react-dom": "^16.14.0 || ^17.0.2"
   },
   "devDependencies": {
-    "microbundle": "^0.13.0",
+    "microbundle": "^0.14.0",
     "prettier": "^2.2.1",
-    "rimraf": "3.0.2"
+    "rimraf": "3.0.2",
+    "npm-run-all": "^4.0.0"
   }
 }
