@@ -28,7 +28,6 @@ const Regl = ({ style, aspect, children }) => {
           resize()
         })
         resize()
-        console.log('creating context')
         regl.current = _regl({
           container: node,
           extensions: ['OES_texture_float', 'OES_element_index_uint'],
