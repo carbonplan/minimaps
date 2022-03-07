@@ -97,10 +97,10 @@ return (
 ```
 
 ## projections
-
 <br><a href="#naturalEarth1" name="naturalEarth1">#</a> <b>naturalEarth1</b>
-
 <br><a href="#orthographic" name="orthographic">#</a> <b>orthographic</b>
+<br><a href="#equirectangular" name="equirectangular">#</a> <b>equirectangular</b>
+<br><a href="#mercator" name="mercator">#</a> <b>mercator</b>
 
 ## license
 

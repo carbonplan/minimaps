@@ -14,6 +14,10 @@ const DEFAULTS = {
     aspect: 1,
     scale: 1
   },
+  'equirectangular': {
+    aspect: 0.5,
+    scale: 1
+  },
 }
 
 const MinimapContext = createContext(null)
