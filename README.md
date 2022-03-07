@@ -29,13 +29,7 @@ The source for `Raster` can be an image (e.g. `png`) or a zarr array or group. I
 Here's a simple example where we use a `json` file for the `Path` and the "Blue Marble" image in `png` format for the `Raster`. We specify that the format is `rgb` because each pixel of the image has three color values that we want to render as rgb.
 
 ```jsx
-import {
-  Minimap,
-  Raster,
-  Path,
-  Sphere,
-  Graticule,
-} from '@carbonplan/minimaps'
+import { Minimap, Raster, Path, Sphere, Graticule } from '@carbonplan/minimaps'
 import { naturalEarth1 } from '@carbonplan/minimaps/projections'
 
 return (
@@ -61,13 +55,7 @@ return (
 Here's a slightly more complicated example where we use a `zarr` file for the `Raster`. The data here are one-dimensional, so we specify a `colormap` and `clim` and the `lut` mode.
 
 ```jsx
-import {
-  Minimap,
-  Raster,
-  Path,
-  Sphere,
-  Graticule,
-} from '@carbonplan/minimaps'
+import { Minimap, Raster, Path, Sphere, Graticule } from '@carbonplan/minimaps'
 import { naturalEarth1 } from '@carbonplan/minimaps/projections'
 import { useColormap } from '@carbonplan/colormaps'
 
@@ -82,11 +70,13 @@ return (
     />
     <Graticule stroke={'white'} />
     <Sphere fill={'black'} />
-        <Raster
+    <Raster
       clim={[0, 50000000]}
       mode='lut'
       nullValue={9.969209968386869e36}
-      source={'https://carbonplan-climatetrace.s3.us-west-2.amazonaws.com/v0.4/blog/total_emissions.zarr'}
+      source={
+        'https://carbonplan-climatetrace.s3.us-west-2.amazonaws.com/v0.4/blog/total_emissions.zarr'
+      }
       variable={'emissions'}
       colormap={colormap}
     />

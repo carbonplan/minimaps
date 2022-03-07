@@ -1,10 +1,10 @@
 {
-	"name": "minimaps-projections",
-	"type": "module",
-	"main": "dst/index.cjs",
-	"module": "dst/index.module.js",
-	"source": "src/index.js",
-	"dependencies": {
+  "name": "minimaps-projections",
+  "type": "module",
+  "main": "dst/index.cjs",
+  "module": "dst/index.module.js",
+  "source": "src/index.js",
+  "dependencies": {
     "d3-geo": "^2.0.1",
     "glsl-geo-projection": "^1.0.1"
   }

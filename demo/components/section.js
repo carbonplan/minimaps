@@ -20,7 +20,7 @@ const datasets = {
   'blue-marble.png':
     'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/2880px-Blue_Marble_2002.png',
   'total_emissions.zarr':
-    'https://carbonplan-climatetrace.s3.us-west-2.amazonaws.com/v0.4/blog/total_emissions.zarr'
+    'https://carbonplan-climatetrace.s3.us-west-2.amazonaws.com/v0.4/blog/total_emissions.zarr',
 }
 
 const Section = ({ children, name }) => {
@@ -32,7 +32,7 @@ const Section = ({ children, name }) => {
     ...minimaps,
     ...minimapsProjections,
     ...theme.colors,
-    useThemedColormap
+    useThemedColormap,
   }
 
   const components = {
@@ -49,7 +49,10 @@ const Section = ({ children, name }) => {
 
   return (
     <MDXProvider components={components}>
-      <Layout title='Minimaps – CarbonPlan' description='Demo of our minimaps library.'>
+      <Layout
+        title='Minimaps – CarbonPlan'
+        description='Demo of our minimaps library.'
+      >
         <Row>
           <Column start={[1, 2, 3, 3]} width={[6]} sx={{ mb: [8, 8, 9, 10] }}>
             {children}

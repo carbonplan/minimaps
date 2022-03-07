@@ -2,21 +2,21 @@ import React, { useState, useRef, createContext, useContext } from 'react'
 import Regl from './regl'
 
 const DEFAULTS = {
-  'naturalEarth1': {
+  naturalEarth1: {
     aspect: 0.5,
-    scale: 1
+    scale: 1,
   },
-  'orthographic': {
+  orthographic: {
     aspect: 1,
-    scale: 3
+    scale: 3,
   },
-  'mercator': {
+  mercator: {
     aspect: 1,
-    scale: 1
+    scale: 1,
   },
-  'equirectangular': {
+  equirectangular: {
     aspect: 0.5,
-    scale: 1
+    scale: 1,
   },
 }
 

@@ -114,16 +114,18 @@ const Raster = ({
         vec2 delta = vec2((1.0 + translate.x) * width / 2.0, (1.0 - translate.y) * height / 2.0);        
 
         x = (x - delta.x) / (scale * (width / (pi * 2.0)));
-        ${transpose ?
-          `y = (delta.y - y) / (scale * (width / (pi * 2.0)));` :
-          `y = (y - delta.y) / (scale * (width / (pi * 2.0)));`
+        ${
+          transpose
+            ? `y = (delta.y - y) / (scale * (width / (pi * 2.0)));`
+            : `y = (y - delta.y) / (scale * (width / (pi * 2.0)));`
         }
 
         vec2 lookup = ${projection.glsl.name}(x, y);
 
-        ${transpose ? 
-          `lookup = vec2((radians(lookup.x) + pi) / twoPi, (radians(lookup.y) + halfPi) / (pi));` :
-          `lookup = vec2((radians(lookup.y) + halfPi) / (pi), (radians(lookup.x) + pi) / twoPi);`
+        ${
+          transpose
+            ? `lookup = vec2((radians(lookup.x) + pi) / twoPi, (radians(lookup.y) + halfPi) / (pi));`
+            : `lookup = vec2((radians(lookup.y) + halfPi) / (pi), (radians(lookup.x) + pi) / twoPi);`
         }
 
         vec4 value = texture2D(texture, lookup);
@@ -214,7 +216,6 @@ const Raster = ({
           redraw()
         })
       }
-      
     }
   }, [source])
 
