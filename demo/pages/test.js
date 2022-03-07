@@ -18,20 +18,22 @@ const Test = () => {
 
 	return (
 		<Box sx={{ width: '50%' }}>
-			<Minimap projection={naturalEarth1} scale={2} translate={[0.1, 0.5]}>
-				<Graticule stroke={primary} />
-				<Path
-					stroke={primary}
-					source={datasets['land-50m.json']}
-					feature={'land'}
-				/>
-				<Sphere fill={background} />
-				<Raster
-					mode='rgb'
-					source={datasets['blue-marble.png']}
-					transpose
-				/>
-			</Minimap>
+			  <Minimap projection={orthographic}>
+		    <Path
+		      stroke={'white'}
+		      source={'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'}
+		      feature={'land'}
+		    />
+		    <Graticule stroke={'white'} />
+		    <Sphere fill={'black'} />
+		    <Raster
+		      source={
+		        'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/2880px-Blue_Marble_2002.png'
+		      }
+		      format={'rgb'}
+		      transpose
+		    />
+		  </Minimap>
 		</Box>
 	)
 }
