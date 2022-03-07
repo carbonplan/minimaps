@@ -58,8 +58,6 @@ return (
 )
 ```
 
-We can use any of the map projections in `@carbonplan/minimaps/projections`. See below.
-
 Here's a slightly more complicated example where we use a `zarr` file for the `Raster`. The data here are one-dimensional, so we specify a `colormap` and `clim` and the `lut` mode.
 
 ```jsx
@@ -97,6 +95,9 @@ return (
 ```
 
 ## projections
+
+For either type of raster data source, we can use any of the map projections in `@carbonplan/minimaps/projections`. Here's how the result would look for the blue marble image.
+
 <br><a href="#naturalEarth1" name="naturalEarth1">#</a> <b>naturalEarth1</b>
 <br><a href="#orthographic" name="orthographic">#</a> <b>orthographic</b>
 <br><a href="#equirectangular" name="equirectangular">#</a> <b>equirectangular</b>
