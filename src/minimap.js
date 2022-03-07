@@ -1,6 +1,21 @@
 import React, { useState, useRef, createContext, useContext } from 'react'
 import Regl from './regl'
 
+const DEFAULTS = {
+  'naturalEarth1': {
+    aspect: 0.5,
+    scale: 1
+  },
+  'orthographic': {
+    aspect: 1,
+    scale: 3
+  },
+  'mercator': {
+    aspect: 1,
+    scale: 1
+  },
+}
+
 const MinimapContext = createContext(null)
 
 export const useMinimap = () => {
@@ -15,28 +30,30 @@ const Minimap = ({
   children,
   projection,
   style,
-  aspect = 0.5,
-  scale = 1,
+  aspect,
+  scale,
   translate = [0, 0],
 }) => {
-  const width = 800
-  const height = aspect * width
 
-  projection.scale(scale * (width / (2 * Math.PI)))
+  const scaleProp = scale || DEFAULTS[projection.id].scale
+  const aspectProp = aspect || DEFAULTS[projection.id].aspect
+
+  const width = 800
+  const height = aspectProp * width
+
+  projection.scale(scaleProp * (width / (2 * Math.PI)))
   projection.translate([
     ((1 + translate[0]) * width) / 2,
     ((1 + translate[1]) * height) / 2,
   ])
-
-  // figure out default scale and aspect scale based on projection id
 
   return (
     <MinimapContext.Provider
       value={{
         projection: projection,
         translate: translate,
-        scale: scale,
-        aspect: aspect,
+        scale: scaleProp,
+        aspect: aspectProp,
         width: width,
         height: height,
       }}
@@ -54,7 +71,7 @@ const Minimap = ({
       >
         <Regl
           extensions={extensions}
-          aspect={aspect}
+          aspect={aspectProp}
           style={{
             pointerEvents: 'none',
             zIndex: -1,
