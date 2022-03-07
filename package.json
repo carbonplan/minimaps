@@ -1,6 +1,6 @@
 {
   "name": "@carbonplan/minimaps",
-  "version": "1.0.0",
+  "version": "1.0.0-develop.0",
   "description": "small maps for figures",
   "main": "dst/index.js",
   "module": "dst/index.esm.js",
