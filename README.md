@@ -99,9 +99,16 @@ return (
 For either type of raster data source, we can use any of the map projections in `@carbonplan/minimaps/projections`. Here's how the result would look for the blue marble image.
 
 <br><a href="#naturalEarth1" name="naturalEarth1">#</a> <b>naturalEarth1</b>
+<br><br><img width="480" height="250" alt="CleanShot 2022-03-07 at 12 05 27@2x" src="https://user-images.githubusercontent.com/3387500/157092621-1c2081a6-5c0d-4afa-83a7-a63bc00e6d9a.png">
+
 <br><a href="#orthographic" name="orthographic">#</a> <b>orthographic</b>
+<br><br><img width="480" height="480" alt="CleanShot 2022-03-07 at 12 05 15@2x" src="https://user-images.githubusercontent.com/3387500/157092649-0c79980f-7115-4e55-b44e-5093b6441df8.png">
+
 <br><a href="#equirectangular" name="equirectangular">#</a> <b>equirectangular</b>
+<br><br><img width="480" height="250" alt="CleanShot 2022-03-07 at 12 06 32@2x" src="https://user-images.githubusercontent.com/3387500/157092673-908a2838-8939-45e5-845a-9f6d6eea7f44.png">
+
 <br><a href="#mercator" name="mercator">#</a> <b>mercator</b>
+<br><br><img width="480" height="480" alt="CleanShot 2022-03-07 at 12 06 52@2x" src="https://user-images.githubusercontent.com/3387500/157092693-4ebb05b8-e590-4302-9159-c0222cbc7a52.png">
 
 ## license
 
