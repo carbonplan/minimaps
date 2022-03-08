@@ -8,7 +8,6 @@ const Raster = ({
   source,
   variable,
   mode = 'rgb',
-  format,
   colormap,
   clim,
   transpose,
@@ -26,15 +25,14 @@ const Raster = ({
   }
 
   const draw = useRef()
-  const texture = useRef()
-  const lut = useRef()
-
-  texture.current = regl.texture({
-    width: 1,
-    height: 1,
-    data: [0, 0, 0, 0],
-  })
-  lut.current = regl.texture()
+  const texture = useRef(
+    regl.texture({
+      width: 1,
+      height: 1,
+      data: [0, 0, 0, 0],
+    })
+  )
+  const lut = useRef(regl.texture())
 
   useEffect(() => {
     const position = [
@@ -176,7 +174,7 @@ const Raster = ({
   }, [])
 
   const redraw = () => {
-    if (draw.current)
+    if (draw.current) {
       draw.current({
         texture: texture.current,
         lut: lut.current,
@@ -185,6 +183,7 @@ const Raster = ({
         clim,
         nullValue,
       })
+    }
   }
 
   useEffect(() => {
@@ -217,7 +216,7 @@ const Raster = ({
         })
       }
     }
-  }, [source])
+  }, [source, variable])
 
   useEffect(() => {
     lut.current = regl.texture({
@@ -230,7 +229,7 @@ const Raster = ({
 
   useEffect(() => {
     redraw()
-  }, [clim, mode, scale, translate, clim, colormap, nullValue])
+  }, [clim, mode, scale, translate, nullValue])
 
   return null
 }
