@@ -8,6 +8,7 @@ const Raster = ({
   source,
   variable,
   mode = 'rgb',
+  opacity = 1,
   colormap,
   clim,
   transpose,
@@ -48,6 +49,7 @@ const Raster = ({
       translate: regl.prop('translate'),
       transpose: regl.prop('transpose'),
       nullValue: regl.prop('nullValue'),
+      opacity: regl.prop('opacity'),
     }
 
     if (mode === 'lut') {
@@ -81,6 +83,7 @@ const Raster = ({
       #endif
       varying vec2 uv;
       uniform vec2 clim;
+      uniform float opacity;
       uniform float viewportWidth;
       uniform float viewportHeight;
       uniform sampler2D texture;
@@ -136,8 +139,8 @@ const Raster = ({
             gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
           } else {
             float rescaled = (value.x - clim.x)/(clim.y - clim.x);
-            c = texture2D(lut, vec2(rescaled, 1.0));  
-            gl_FragColor = vec4(c.x, c.y, c.z, 1.0);
+            c = texture2D(lut, vec2(rescaled, opacity));
+            gl_FragColor = vec4(c.x, c.y, c.z, opacity);
           }`
             : ''
         }
@@ -148,7 +151,7 @@ const Raster = ({
           if (value.x == nullValue) {
             gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
           } else {
-            gl_FragColor = vec4(value.x , value.y, value.z, 1.0);
+            gl_FragColor = vec4(value.x , value.y, value.z, opacity);
           }
         `
             : ''
@@ -181,6 +184,7 @@ const Raster = ({
         scale,
         translate,
         clim,
+        opacity,
         nullValue,
       })
     }
@@ -229,7 +233,7 @@ const Raster = ({
 
   useEffect(() => {
     redraw()
-  }, [clim, mode, scale, translate, nullValue])
+  }, [clim, opacity, mode, scale, translate, nullValue])
 
   return null
 }
