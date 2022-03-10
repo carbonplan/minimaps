@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import { useEffect, useRef } from 'react'
 import { extname } from 'path'
 import { useRegl } from './regl'
 import { useMinimap } from './minimap'

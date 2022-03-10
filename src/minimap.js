@@ -1,4 +1,10 @@
-import React, { useState, useRef, createContext, useContext } from 'react'
+import React, {
+  useEffect,
+  useRef,
+  createContext,
+  useContext,
+  useState,
+} from 'react'
 import Regl from './regl'
 
 const DEFAULTS = {
@@ -20,6 +26,8 @@ const DEFAULTS = {
   },
 }
 
+const WIDTH = 800
+
 const MinimapContext = createContext(null)
 
 export const useMinimap = () => {
@@ -31,35 +39,42 @@ const Minimap = ({
   tabIndex,
   className,
   children,
-  projection,
+  projection: getProjection,
   style,
-  aspect,
-  scale,
+  aspect: aspectProp,
+  scale: scaleProp,
   translate = [0, 0],
 }) => {
-  const _projection = Object.assign({}, projection)
+  const [projection, setProjection] = useState({ value: getProjection() })
+  const [aspect, setAspect] = useState(aspectProp)
+  const [scale, setScale] = useState(scaleProp)
 
-  const scaleProp = scale || DEFAULTS[_projection.id].scale
-  const aspectProp = aspect || DEFAULTS[_projection.id].aspect
+  useEffect(() => {
+    const updatedProjection = getProjection()
+    const defaults = DEFAULTS[updatedProjection.id]
+    const updatedScale = scaleProp || defaults.scale
+    const updatedAspect = aspectProp || defaults.aspect
 
-  const width = 800
-  const height = aspectProp * width
+    updatedProjection.scale(updatedScale * (WIDTH / (2 * Math.PI)))
+    updatedProjection.translate([
+      ((1 + translate[0]) * WIDTH) / 2,
+      ((1 + translate[1]) * updatedAspect * WIDTH) / 2,
+    ])
 
-  _projection.scale(scaleProp * (width / (2 * Math.PI)))
-  _projection.translate([
-    ((1 + translate[0]) * width) / 2,
-    ((1 + translate[1]) * height) / 2,
-  ])
+    setAspect(updatedAspect)
+    setScale(updatedScale)
+    setProjection({ value: updatedProjection })
+  }, [getProjection, scaleProp, aspectProp, translate[0], translate[1]])
 
   return (
     <MinimapContext.Provider
       value={{
-        projection: _projection,
+        projection: projection.value,
         translate: translate,
-        scale: scaleProp,
-        aspect: aspectProp,
-        width: width,
-        height: height,
+        scale,
+        aspect,
+        width: WIDTH,
+        height: aspect * WIDTH,
       }}
     >
       <div
@@ -81,7 +96,7 @@ const Minimap = ({
           }}
         >
           <svg
-            viewBox={`0 0 ${width} ${height}`}
+            viewBox={`0 0 ${WIDTH} ${WIDTH * aspect}`}
             style={{
               position: 'absolute',
               width: '100%',
