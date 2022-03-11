@@ -28,9 +28,25 @@ const Test = () => {
 
   return (
     <>
-      <Slider sx={{width: '200px', mt: [4], ml: [4] }} value={clim} min={0} max={6000} onChange={(e) => setClim(parseFloat(e.target.value))}/>
-      <Slider sx={{width: '200px', mt: [4], ml: [4]}} step={0.01} value={scale} min={0.1} max={3} onChange={(e) => setScale(parseFloat(e.target.value))}/>
-      <Select sx={{width: '200px', mt: [2], ml: [4]}} onChange={(e) => setVariable(e.target.value)}>
+      <Slider
+        sx={{ width: '200px', mt: [4], ml: [4] }}
+        value={clim}
+        min={0}
+        max={6000}
+        onChange={(e) => setClim(parseFloat(e.target.value))}
+      />
+      <Slider
+        sx={{ width: '200px', mt: [4], ml: [4] }}
+        step={0.01}
+        value={scale}
+        min={0.1}
+        max={3}
+        onChange={(e) => setScale(parseFloat(e.target.value))}
+      />
+      <Select
+        sx={{ width: '200px', mt: [2], ml: [4] }}
+        onChange={(e) => setVariable(e.target.value)}
+      >
         <option value='netcostpertonfeed'>netcostpertonfeed</option>
         <option value='netcostpertonfood'>netcostpertonfood</option>
       </Select>

@@ -198,7 +198,7 @@ const Raster = ({
         nullValue,
         viewportWidth,
         viewportHeight,
-        pixelRatio
+        pixelRatio,
       })
     }
   }
@@ -258,7 +258,16 @@ const Raster = ({
 
   useEffect(() => {
     redraw('on prop change')
-  }, [clim[0], clim[1], mode, scale, translate[0], translate[1], nullValue, projection])
+  }, [
+    clim[0],
+    clim[1],
+    mode,
+    scale,
+    translate[0],
+    translate[1],
+    nullValue,
+    projection,
+  ])
 
   return null
 }
