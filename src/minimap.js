@@ -1,22 +1,32 @@
-import React, { useState, useRef, createContext, useContext } from 'react'
+import React, {
+  useState,
+  useEffect,
+  useRef,
+  createContext,
+  useContext,
+} from 'react'
 import Regl from './regl'
 
 const DEFAULTS = {
   naturalEarth1: {
     aspect: 0.5,
     scale: 1,
+    translate: [0, 0],
   },
   orthographic: {
     aspect: 1,
     scale: 3,
+    translate: [0, 0],
   },
   mercator: {
     aspect: 1,
     scale: 1,
+    translate: [0, 0],
   },
   equirectangular: {
     aspect: 0.5,
     scale: 1,
+    translate: [0, 0],
   },
 }
 
@@ -31,35 +41,51 @@ const Minimap = ({
   tabIndex,
   className,
   children,
-  projection,
+  projection: getProjection,
   style,
-  aspect,
-  scale,
-  translate = [0, 0],
+  aspect: aspectProp,
+  scale: scaleProp,
+  translate: translateProp,
 }) => {
-  const _projection = Object.assign({}, projection)
+  const [projection, setProjection] = useState({
+    value: getProjection(),
+    scale: scaleProp,
+    aspect: aspectProp,
+    translate: translateProp,
+  })
 
-  const scaleProp = scale || DEFAULTS[_projection.id].scale
-  const aspectProp = aspect || DEFAULTS[_projection.id].aspect
+  const WIDTH = 800
 
-  const width = 800
-  const height = aspectProp * width
+  useEffect(() => {
+    const updatedProjection = getProjection()
+    const defaults = DEFAULTS[updatedProjection.id]
+    const updatedScale = scaleProp || defaults.scale
+    const updatedAspect = aspectProp || defaults.aspect
+    const updatedTranslate = translateProp || defaults.translate
 
-  _projection.scale(scaleProp * (width / (2 * Math.PI)))
-  _projection.translate([
-    ((1 + translate[0]) * width) / 2,
-    ((1 + translate[1]) * height) / 2,
-  ])
+    updatedProjection.scale(updatedScale * (WIDTH / (2 * Math.PI)))
+    updatedProjection.translate([
+      ((1 + updatedTranslate[0]) * WIDTH) / 2,
+      ((1 + updatedTranslate[1]) * updatedAspect * WIDTH) / 2,
+    ])
+
+    setProjection({
+      scale: updatedScale,
+      aspect: updatedAspect,
+      value: updatedProjection,
+      translate: updatedTranslate,
+    })
+  }, [getProjection, scaleProp, aspectProp, translateProp])
 
   return (
     <MinimapContext.Provider
       value={{
-        projection: _projection,
-        translate: translate,
-        scale: scaleProp,
-        aspect: aspectProp,
-        width: width,
-        height: height,
+        projection: projection.value,
+        translate: projection.translate,
+        scale: projection.scale,
+        aspect: projection.aspect,
+        width: WIDTH,
+        height: WIDTH * projection.aspect,
       }}
     >
       <div
@@ -74,14 +100,14 @@ const Minimap = ({
         }}
       >
         <Regl
-          aspect={aspectProp}
+          aspect={projection.aspect}
           style={{
             pointerEvents: 'none',
             zIndex: -1,
           }}
         >
           <svg
-            viewBox={`0 0 ${width} ${height}`}
+            viewBox={`0 0 ${WIDTH} ${WIDTH * projection.aspect}`}
             style={{
               position: 'absolute',
               width: '100%',

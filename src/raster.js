@@ -12,6 +12,7 @@ const Raster = ({
   clim,
   transpose,
   nullValue = -999,
+  id,
 }) => {
   const { regl } = useRegl()
   const { scale, translate, projection } = useMinimap()
@@ -173,7 +174,11 @@ const Raster = ({
     })
   }, [])
 
-  const redraw = () => {
+  const redraw = (caller) => {
+    console.log('drawing')
+    console.log(id)
+    console.log(caller)
+    console.log(scale)
     if (draw.current) {
       draw.current({
         texture: texture.current,
@@ -197,7 +202,7 @@ const Raster = ({
       image.onload = function () {
         setTimeout(() => {
           texture.current(image)
-          redraw()
+          redraw('onload')
         }, 0)
       }
     }
@@ -207,12 +212,12 @@ const Raster = ({
       if (variable) {
         zarr().loadGroup(source, (error, data, metadata) => {
           texture.current(data[variable])
-          redraw()
+          redraw('onload')
         })
       } else {
         zarr().load(source, (error, data) => {
           texture.current(data)
-          redraw()
+          redraw('onload')
         })
       }
     }
@@ -224,12 +229,14 @@ const Raster = ({
       format: 'rgb',
       shape: [255, 1],
     })
-    redraw()
+    redraw('on colormap change')
   }, [colormap])
 
   useEffect(() => {
-    redraw()
-  }, [clim, mode, scale, translate, nullValue])
+    redraw('on prop change')
+  }, [scale, translate, clim, mode, nullValue, projection])
+
+  // clim, mode, scale, translate, nullValue, projection
 
   return null
 }
