@@ -12,17 +12,20 @@ const Path = ({
   opacity = 0.7,
 }) => {
   const [path, setPath] = useState()
+  const [data, setData] = useState()
   const { projection, width, height } = useMinimap()
 
   useEffect(() => {
     fetch(source)
       .then((response) => response.json())
       .then((topology) => {
-        setPath(
-          geoPath(projection)(topoFeature(topology, topology.objects[feature]))
-        )
+        setData(topoFeature(topology, topology.objects[feature]))
       })
-  }, [source, projection])
+  }, [source])
+
+  useEffect(() => {
+    setPath(geoPath(projection)(data))
+  }, [data, projection])
 
   return (
     <path

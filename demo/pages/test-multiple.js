@@ -24,7 +24,7 @@ const Test = () => {
   return (
     <>
       <Box sx={{ width: '50%' }}>
-        <Minimap projection={naturalEarth1} translate={[0, 0]} scale={1}>
+        <Minimap projection={naturalEarth1} scale={1}>
           <Path
             stroke={'white'}
             source={'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json'}
@@ -33,7 +33,6 @@ const Test = () => {
           <Graticule stroke={'white'} />
           <Sphere fill={'white'} />
           <Raster
-            id={'a'}
             source={
               'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/2880px-Blue_Marble_2002.png'
             }
@@ -52,7 +51,6 @@ const Test = () => {
           <Graticule stroke={'white'} />
           <Sphere fill={'white'} />
           <Raster
-            id={'b'}
             source={
               'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/2880px-Blue_Marble_2002.png'
             }
