@@ -27,7 +27,9 @@ const Raster = ({
   const draw = useRef()
   const texture = useRef()
   const lut = useRef()
-  const ready = useRef(false)
+  const context = useRef({})
+  const isLoaded = useRef(false)
+  const isRendering = useRef(false)
   const zarrGroupCache = useRef()
 
   useEffect(() => {
@@ -44,9 +46,9 @@ const Raster = ({
     ]
 
     let uniforms = {
-      pixelRatio: regl.context('pixelRatio'),
-      viewportWidth: regl.context('viewportWidth'),
-      viewportHeight: regl.context('viewportHeight'),
+      pixelRatio: regl.prop('pixelRatio'),
+      viewportWidth: regl.prop('viewportWidth'),
+      viewportHeight: regl.prop('viewportHeight'),
       texture: regl.prop('texture'),
       scale: regl.prop('scale'),
       translate: regl.prop('translate'),
@@ -175,12 +177,18 @@ const Raster = ({
       color: [0, 0, 0, 0],
       depth: 1,
     })
+
+    regl.frame((_context) => {
+      context.current = _context
+      if (!isRendering.current) {
+        isRendering.current = true
+      }
+    })
   }, [])
 
   const redraw = (caller) => {
-    console.log('redrawing')
-    console.log(caller)
-    if (draw.current && ready.current) {
+    if (draw.current && isLoaded.current && isRendering.current) {
+      const { viewportWidth, viewportHeight, pixelRatio } = context.current
       draw.current({
         texture: texture.current,
         lut: lut.current,
@@ -188,6 +196,9 @@ const Raster = ({
         translate,
         clim,
         nullValue,
+        viewportWidth,
+        viewportHeight,
+        pixelRatio
       })
     }
   }
@@ -202,7 +213,7 @@ const Raster = ({
       image.crossOrigin = 'anonymous'
       image.onload = function () {
         setTimeout(() => {
-          ready.current = true
+          isLoaded.current = true
           texture.current(image)
           redraw('on image load')
         }, 0)
@@ -214,13 +225,13 @@ const Raster = ({
       if (variable) {
         zarr().loadGroup(source, (error, data, metadata) => {
           zarrGroupCache.current = data
-          ready.current = true
+          isLoaded.current = true
           texture.current(zarrGroupCache.current[variable])
           redraw('on zarr group load')
         })
       } else {
         zarr().load(source, (error, data) => {
-          ready.current = true
+          isLoaded.current = true
           texture.current(data)
           redraw('on zarr array load')
         })
