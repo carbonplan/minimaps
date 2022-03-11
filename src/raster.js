@@ -14,7 +14,6 @@ const Raster = ({
   nullValue = -999,
 }) => {
   const { regl } = useRegl()
-  const [data, setData] = useState()
   const { scale, translate, projection } = useMinimap()
 
   if (mode == 'lut' && !colormap) {
@@ -28,6 +27,8 @@ const Raster = ({
   const draw = useRef()
   const texture = useRef()
   const lut = useRef()
+  const ready = useRef(false)
+  const zarrGroupCache = useRef()
 
   useEffect(() => {
     texture.current = regl.texture({
@@ -177,7 +178,9 @@ const Raster = ({
   }, [])
 
   const redraw = (caller) => {
-    if (draw.current) {
+    console.log('redrawing')
+    console.log(caller)
+    if (draw.current && ready.current) {
       draw.current({
         texture: texture.current,
         lut: lut.current,
@@ -199,6 +202,7 @@ const Raster = ({
       image.crossOrigin = 'anonymous'
       image.onload = function () {
         setTimeout(() => {
+          ready.current = true
           texture.current(image)
           redraw('on image load')
         }, 0)
@@ -209,12 +213,14 @@ const Raster = ({
     if (ext === '.zarr') {
       if (variable) {
         zarr().loadGroup(source, (error, data, metadata) => {
-          setData(data)
-          texture.current(data[variable])
+          zarrGroupCache.current = data
+          ready.current = true
+          texture.current(zarrGroupCache.current[variable])
           redraw('on zarr group load')
         })
       } else {
         zarr().load(source, (error, data) => {
+          ready.current = true
           texture.current(data)
           redraw('on zarr array load')
         })
@@ -223,15 +229,15 @@ const Raster = ({
   }, [source])
 
   useEffect(() => {
-    // handle variable change on cached data
-    if (data) {
-      texture.current(data[variable])
+    // handle variable change on cached zarr group data
+    if (zarrGroupCache.current) {
+      texture.current(zarrGroupCache.current[variable])
       redraw('on variable change')
     }
-  }, [data, variable])
+  }, [variable])
 
   useEffect(() => {
-    lut.current = regl.texture({
+    lut.current({
       data: colormap,
       format: 'rgb',
       shape: [255, 1],
@@ -241,7 +247,7 @@ const Raster = ({
 
   useEffect(() => {
     redraw('on prop change')
-  }, [clim, mode, scale, translate, nullValue, projection])
+  }, [clim[0], clim[1], mode, scale, translate[0], translate[1], nullValue, projection])
 
   return null
 }
