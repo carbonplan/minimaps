@@ -251,7 +251,7 @@ const Raster = ({
     lut.current({
       data: colormap,
       format: 'rgb',
-      shape: [255, 1],
+      shape: [colormap.length, 1],
     })
     redraw('on colormap change')
   }, [colormap])
