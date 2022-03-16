@@ -9,14 +9,14 @@
 
 [![GitHub][github-badge]][github]
 ![MIT License][]
+![NPM Version][]
 
 [github]: https://github.com/carbonplan/maps
 [github-badge]: https://badgen.net/badge/-/github?icon=github&label
 [mit license]: https://badgen.net/badge/license/MIT/blue
+[npm version]: https://badgen.net/npm/v/@carbonplan/minimaps
 
-_Note: Work in progress!_
-
-This library makes it easy to generate small data-driven raster maps. It's a complement to making [interactive tiled maps](https://github.com/carbonplan/maps) that can be panned and zoomed. The use case here is figures and other static graphics where we don't need interactivity, where we have the entire raster dataset we want to render in one file, and where we often want to show the full globe.
+This library makes it easy to generate small data-driven raster maps. It's a complement to our `@carbonplan/maps` library which is for making [interactive tiled maps](https://github.com/carbonplan/maps) that can be panned and zoomed. The use case here is figures and other static graphics where we don't need interactivity, where we can easily load the entire raster dataset we want to render, and where we often want to show the full globe.
 
 Not relying on tiles frees us up to more easily use custom projections, which we have implemented here performantly via WebGL. We're using a [separate package](https://github.com/carbonplan/glsl-geo-projection) containing the GLSL shader math for inverse geometric map projections.
 
@@ -83,6 +83,10 @@ return (
   </Minimap>
 )
 ```
+
+## data sources
+
+You can specify the `source` as either the URL of an image resource (e.g. `.png` or `.jpeg`) or a Zarr store (`.zarr`). In the case of using a Zarr store, you can either point to an array, or to a group an additionally specify the `variable`.
 
 ## projections
 
