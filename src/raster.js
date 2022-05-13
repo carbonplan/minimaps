@@ -8,10 +8,13 @@ const Raster = ({
   source,
   variable,
   mode = 'rgb',
-  colormap,
-  clim,
+  colormap = null,
+  clim = null,
   transpose,
   nullValue = -999,
+  bounds = null,
+  lat = 'lat',
+  lon = 'lon',
 }) => {
   const { regl } = useRegl()
   const { scale, translate, projection } = useMinimap()
@@ -30,6 +33,7 @@ const Raster = ({
   const context = useRef({})
   const isLoaded = useRef(false)
   const isRendering = useRef(false)
+  const boundsRef = useRef(null)
   const zarrGroupCache = useRef()
 
   useEffect(() => {
@@ -54,6 +58,7 @@ const Raster = ({
       translate: regl.prop('translate'),
       transpose: regl.prop('transpose'),
       nullValue: regl.prop('nullValue'),
+      bounds: regl.prop('bounds'),
     }
 
     if (mode === 'lut') {
@@ -87,6 +92,7 @@ const Raster = ({
       #endif
       varying vec2 uv;
       uniform vec2 clim;
+      uniform vec4 bounds;
       uniform float viewportWidth;
       uniform float viewportHeight;
       uniform sampler2D texture;
@@ -126,19 +132,29 @@ const Raster = ({
 
         vec2 lookup = ${projection.glsl.name}(x, y);
 
+        vec2 rescaled;
+
+        float scaleY = 180.0 / abs(bounds[0] - bounds[1]);
+        float scaleX = 360.0 / abs(bounds[2] - bounds[3]);
+        float translateY = 90.0 + bounds[0];
+        float translateX = 180.0 + bounds[2];
+
         ${
           transpose
-            ? `lookup = vec2((radians(lookup.x) + pi) / twoPi, (radians(lookup.y) + halfPi) / (pi));`
-            : `lookup = vec2((radians(lookup.y) + halfPi) / (pi), (radians(lookup.x) + pi) / twoPi);`
+            ? `rescaled = vec2(scaleX * (radians(lookup.x - translateX) + pi) / twoPi, scaleY * (radians(lookup.y - translateY) + halfPi) / (pi));`
+            : `rescaled = vec2(scaleY * (radians(lookup.y - translateY) + halfPi) / (pi), scaleX * (radians(lookup.x - translateX) + pi) / twoPi);`
         }
 
-        vec4 value = texture2D(texture, lookup);
-        
+        vec4 value = texture2D(texture, rescaled);
+
+        bool inboundsY = lookup.y > bounds[0] && lookup.y < bounds[1];
+        bool inboundsX = lookup.x > bounds[2] && lookup.x < bounds[3];
+
         ${
           mode === 'lut'
             ? `
           vec4 c;
-          if (value.x == nullValue || isnan(value.x)) {
+          if ((!inboundsY || !inboundsX) || (value.x == nullValue || isnan(value.x))) {
             gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
           } else {
             float rescaled = (value.x - clim.x)/(clim.y - clim.x);
@@ -192,6 +208,14 @@ const Raster = ({
       draw.current({
         texture: texture.current,
         lut: lut.current,
+        bounds: boundsRef.current
+          ? [
+              boundsRef.current.lat[0],
+              boundsRef.current.lat[1],
+              boundsRef.current.lon[0],
+              boundsRef.current.lon[1],
+            ]
+          : [-90, 90, -180, 180],
         scale,
         translate,
         clim,
@@ -224,6 +248,25 @@ const Raster = ({
     if (ext === '.zarr') {
       if (variable) {
         zarr().loadGroup(source, (error, data, metadata) => {
+          if (!Object.keys(data).includes(variable)) {
+            throw new Error(
+              `variable ${variable} not found in zarr dataset, options are: ${Object.keys(
+                data
+              )}`
+            )
+          }
+          if (!bounds && data[lat] && data[lon]) {
+            boundsRef.current = {
+              lat: [
+                data[lat].data.reduce((a, b) => Math.min(a, b)),
+                data[lat].data.reduce((a, b) => Math.max(a, b)),
+              ],
+              lon: [
+                data[lon].data.reduce((a, b) => Math.min(a, b)),
+                data[lon].data.reduce((a, b) => Math.max(a, b)),
+              ],
+            }
+          }
           zarrGroupCache.current = data
           isLoaded.current = true
           texture.current(zarrGroupCache.current[variable])
@@ -237,7 +280,7 @@ const Raster = ({
         })
       }
     }
-  }, [source])
+  }, [source, lat, lon])
 
   useEffect(() => {
     // handle variable change on cached zarr group data
@@ -248,19 +291,30 @@ const Raster = ({
   }, [variable])
 
   useEffect(() => {
-    lut.current({
-      data: colormap,
-      format: 'rgb',
-      shape: [colormap.length, 1],
-    })
-    redraw('on colormap change')
+    boundsRef.current = bounds
+    redraw('on variable change')
+  }, [
+    bounds && bounds.lat[0],
+    bounds && bounds.lat[1],
+    bounds && bounds.lon[0],
+    bounds && bounds.lon[1],
+  ])
+
+  useEffect(() => {
+    if (colormap) {
+      lut.current({
+        data: colormap,
+        format: 'rgb',
+        shape: [colormap.length, 1],
+      })
+      redraw('on colormap change')
+    }
   }, [colormap])
 
   useEffect(() => {
     redraw('on prop change')
   }, [
-    clim[0],
-    clim[1],
+    clim && clim[0],
     mode,
     scale,
     translate[0],

@@ -9,14 +9,7 @@ import {
 import { useThemeUI, Box } from 'theme-ui'
 import { Slider, Select } from '@carbonplan/components'
 import { useColormap, useThemedColormap } from '@carbonplan/colormaps'
-
-const datasets = {
-  'land-50m.json': 'https://cdn.jsdelivr.net/npm/world-atlas@2/land-50m.json',
-  'blue-marble.png':
-    'https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Blue_Marble_2002.png/2880px-Blue_Marble_2002.png',
-  'total_emissions.zarr':
-    'https://carbonplan-climatetrace.s3.us-west-2.amazonaws.com/v0.4/blog/total_emissions.zarr',
-}
+import { datasets } from '../datasets'
 
 const Test = () => {
   const { theme } = useThemeUI()
@@ -54,13 +47,13 @@ const Test = () => {
         <Minimap projection={naturalEarth1} scale={scale}>
           <Path
             stroke={'white'}
-            source={'https://cdn.jsdelivr.net/npm/world-atlas@2/land-110m.json'}
+            source={datasets['land-110m.json']}
             feature={'land'}
           />
           <Graticule stroke={primary} />
           <Sphere fill={background} />
           <Raster
-            source='https://storage.googleapis.com/carbonplan-macroalgae/data/processed/article/costs.zarr'
+            source={datasets['seaweed_farming_costs.zarr']}
             colormap={colormap}
             mode={'lut'}
             clim={[0, clim]}
