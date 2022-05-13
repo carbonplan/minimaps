@@ -11,7 +11,6 @@ import { Slider, Select } from '@carbonplan/components'
 import { useColormap, useThemedColormap } from '@carbonplan/colormaps'
 import { datasets } from '../datasets'
 
-
 const Test = () => {
   const { theme } = useThemeUI()
   const { primary, background } = theme.colors

@@ -7,8 +7,8 @@ export const datasets = {
     'https://carbonplan-climatetrace.s3.us-west-2.amazonaws.com/v0.4/blog/total_emissions.zarr',
   'seaweed_farming_costs.zarr':
     'https://storage.googleapis.com/carbonplan-macroalgae/data/processed/article/costs.zarr',
-  'gcm_westus.zarr': 
+  'gcm_westus.zarr':
     'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/westus/gcm-tasmax.zarr',
-  'gcm_chile.zarr': 
-    'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/chile/gcm-tasmax.zarr'
+  'gcm_chile.zarr':
+    'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/chile/gcm-tasmax.zarr',
 }
