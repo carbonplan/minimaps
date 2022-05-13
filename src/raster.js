@@ -27,6 +27,7 @@ const Raster = ({
     throw new Error("must provide 'clim' when using 'lut' mode")
   }
 
+  const redraw = useRef()
   const draw = useRef()
   const texture = useRef()
   const lut = useRef()
@@ -202,7 +203,7 @@ const Raster = ({
     })
   }, [])
 
-  const redraw = (caller) => {
+  redraw.current = (caller) => {
     if (draw.current && isLoaded.current && isRendering.current) {
       const { viewportWidth, viewportHeight, pixelRatio } = context.current
       draw.current({
@@ -239,7 +240,7 @@ const Raster = ({
         setTimeout(() => {
           isLoaded.current = true
           texture.current(image)
-          redraw('on image load')
+          redraw.current('on image load')
         }, 0)
       }
     }
@@ -270,13 +271,13 @@ const Raster = ({
           zarrGroupCache.current = data
           isLoaded.current = true
           texture.current(zarrGroupCache.current[variable])
-          redraw('on zarr group load')
+          redraw.current('on zarr group load')
         })
       } else {
         zarr().load(source, (error, data) => {
           isLoaded.current = true
           texture.current(data)
-          redraw('on zarr array load')
+          redraw.current('on zarr array load')
         })
       }
     }
@@ -286,13 +287,13 @@ const Raster = ({
     // handle variable change on cached zarr group data
     if (zarrGroupCache.current) {
       texture.current(zarrGroupCache.current[variable])
-      redraw('on variable change')
+      redraw.current('on variable change')
     }
   }, [variable])
 
   useEffect(() => {
     boundsRef.current = bounds
-    redraw('on variable change')
+    redraw.current('on variable change')
   }, [
     bounds && bounds.lat[0],
     bounds && bounds.lat[1],
@@ -307,12 +308,12 @@ const Raster = ({
         format: 'rgb',
         shape: [colormap.length, 1],
       })
-      redraw('on colormap change')
+      redraw.current('on colormap change')
     }
   }, [colormap])
 
   useEffect(() => {
-    redraw('on prop change')
+    redraw.current('on prop change')
   }, [
     clim && clim[0],
     mode,
