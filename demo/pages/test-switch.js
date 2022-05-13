@@ -14,9 +14,9 @@ import { datasets } from '../datasets'
 const Test = () => {
   const { theme } = useThemeUI()
   const { primary, background } = theme.colors
-  const [ dataset, setDataset ] = useState('gcm_chile.zarr')
-  const [ scale, setScale ] = useState(1)
-  const colormap = useThemedColormap('cool', { count: 255, format: 'rgb' }) 
+  const [dataset, setDataset] = useState('gcm_chile.zarr')
+  const [scale, setScale] = useState(1)
+  const colormap = useThemedColormap('cool', { count: 255, format: 'rgb' })
 
   useEffect(() => {
     if (dataset === 'gcm_chile.zarr') {
