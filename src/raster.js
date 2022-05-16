@@ -58,12 +58,9 @@ const Raster = ({
   const lut = useRef()
   const context = useRef({})
   const isLoaded = useRef(false)
-  const isRendering = useRef(false)
   const boundsRef = useRef(null)
   const zarrGroupCache = useRef()
-
-  const isSync = typeof source !== 'string'
-  const [isRenderingSync, setIsRenderingSync] = useState(false)
+  const invalidated = useRef(null)
 
   useEffect(() => {
     texture.current = regl.texture({
@@ -225,15 +222,16 @@ const Raster = ({
 
     regl.frame((_context) => {
       context.current = _context
-      if (!isRendering.current) {
-        isRendering.current = true
-        setIsRenderingSync(true)
+
+      if (invalidated.current) {
+        redraw.current(invalidated.current)
       }
+      invalidated.current = null
     })
   }, [])
 
-  redraw.current = (caller) => {
-    if (draw.current && isLoaded.current && isRendering.current) {
+  redraw.current = (invalidatedBy) => {
+    if (draw.current && isLoaded.current) {
       const { viewportWidth, viewportHeight, pixelRatio } = context.current
       draw.current({
         texture: texture.current,
@@ -271,7 +269,7 @@ const Raster = ({
           setTimeout(() => {
             isLoaded.current = true
             texture.current(image)
-            redraw.current('on image load')
+            invalidated.current = 'on image load'
           }, 0)
         }
       }
@@ -288,13 +286,13 @@ const Raster = ({
             zarrGroupCache.current = data
             isLoaded.current = true
             texture.current(zarrGroupCache.current[variable])
-            redraw.current('on zarr group load')
+            invalidated.current = 'on zarr group load'
           })
         } else {
           zarr().load(source, (error, data) => {
             isLoaded.current = true
             texture.current(data)
-            redraw.current('on zarr array load')
+            invalidated.current = 'on zarr array load'
           })
         }
       }
@@ -310,11 +308,11 @@ const Raster = ({
         zarrGroupCache.current = source
         isLoaded.current = true
         texture.current(zarrGroupCache.current[variable])
-        redraw.current('on zarr group read')
+        invalidated.current = 'on zarr group read'
       } else {
         isLoaded.current = true
         texture.current(source)
-        redraw.current('on zarr array read')
+        invalidated.current = 'on zarr array read'
       }
     }
   }, [source, lat, lon])
@@ -323,7 +321,7 @@ const Raster = ({
     // handle variable change on cached zarr group data
     if (zarrGroupCache.current) {
       texture.current(zarrGroupCache.current[variable])
-      redraw.current('on variable change')
+      invalidated.current = 'on variable change'
     }
   }, [variable])
 
@@ -331,7 +329,7 @@ const Raster = ({
     if (bounds) {
       boundsRef.current = bounds
     }
-    redraw.current('on bounds change')
+    invalidated.current = 'on bounds change'
   }, [
     bounds && bounds.lat[0],
     bounds && bounds.lat[1],
@@ -340,24 +338,18 @@ const Raster = ({
   ])
 
   useEffect(() => {
-    if (isSync && isRenderingSync) {
-      redraw.current('rendering sync')
-    }
-  }, [isSync, isRenderingSync])
-
-  useEffect(() => {
     if (colormap) {
       lut.current({
         data: colormap,
         format: 'rgb',
         shape: [colormap.length, 1],
       })
-      redraw.current('on colormap change')
+      invalidated.current = 'on colormap change'
     }
   }, [colormap])
 
   useEffect(() => {
-    redraw.current('on prop change')
+    invalidated.current = 'on prop change'
   }, [
     clim && clim[0],
     mode,
