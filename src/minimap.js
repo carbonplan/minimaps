@@ -63,6 +63,9 @@ const Minimap = ({
     const updatedAspect = aspectProp || defaults.aspect
     const updatedTranslate = translateProp || defaults.translate
 
+    console.log('scale', updatedScale)
+    console.log('translate', updatedTranslate)
+
     updatedProjection.scale(updatedScale * (WIDTH / (2 * Math.PI)))
     updatedProjection.translate([
       ((1 + updatedTranslate[0]) * WIDTH) / 2,

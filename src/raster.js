@@ -4,6 +4,31 @@ import { useRegl } from './regl'
 import { useMinimap } from './minimap'
 import zarr from 'zarr-js'
 
+const validateGroup = (data, variable) => {
+  if (!Object.keys(data).includes(variable)) {
+    throw new Error(
+      `variable ${variable} not found in zarr dataset, options are: ${Object.keys(
+        data
+      )}`
+    )
+  }
+
+  return true
+}
+
+const getBounds = ({ data, lat, lon }) => {
+  return {
+    lat: [
+      data[lat].data.reduce((a, b) => Math.min(a, b)),
+      data[lat].data.reduce((a, b) => Math.max(a, b)),
+    ],
+    lon: [
+      data[lon].data.reduce((a, b) => Math.min(a, b)),
+      data[lon].data.reduce((a, b) => Math.max(a, b)),
+    ],
+  }
+}
+
 const Raster = ({
   source,
   variable,
@@ -36,6 +61,9 @@ const Raster = ({
   const isRendering = useRef(false)
   const boundsRef = useRef(null)
   const zarrGroupCache = useRef()
+
+  const isSync = typeof source !== 'string'
+  const [isRenderingSync, setIsRenderingSync] = useState(false)
 
   useEffect(() => {
     texture.current = regl.texture({
@@ -199,6 +227,7 @@ const Raster = ({
       context.current = _context
       if (!isRendering.current) {
         isRendering.current = true
+        setIsRenderingSync(true)
       }
     })
   }, [])
@@ -229,56 +258,63 @@ const Raster = ({
   }
 
   useEffect(() => {
-    const ext = extname(source)
+    // handle loading asynchronously from a specified path
+    if (typeof source === 'string') {
+      const ext = extname(source)
 
-    // handle images
-    if (['.png', '.jpg', '.jpeg'].includes(ext)) {
-      const image = document.createElement('img')
-      image.src = source
-      image.crossOrigin = 'anonymous'
-      image.onload = function () {
-        setTimeout(() => {
-          isLoaded.current = true
-          texture.current(image)
-          redraw.current('on image load')
-        }, 0)
+      // handle images
+      if (['.png', '.jpg', '.jpeg'].includes(ext)) {
+        const image = document.createElement('img')
+        image.src = source
+        image.crossOrigin = 'anonymous'
+        image.onload = function () {
+          setTimeout(() => {
+            isLoaded.current = true
+            texture.current(image)
+            redraw.current('on image load')
+          }, 0)
+        }
       }
-    }
 
-    // handle zarr groups and arrays
-    if (ext === '.zarr') {
-      if (variable) {
-        zarr().loadGroup(source, (error, data, metadata) => {
-          if (!Object.keys(data).includes(variable)) {
-            throw new Error(
-              `variable ${variable} not found in zarr dataset, options are: ${Object.keys(
-                data
-              )}`
-            )
-          }
-          if (!bounds && data[lat] && data[lon]) {
-            boundsRef.current = {
-              lat: [
-                data[lat].data.reduce((a, b) => Math.min(a, b)),
-                data[lat].data.reduce((a, b) => Math.max(a, b)),
-              ],
-              lon: [
-                data[lon].data.reduce((a, b) => Math.min(a, b)),
-                data[lon].data.reduce((a, b) => Math.max(a, b)),
-              ],
+      // handle zarr groups and arrays
+      if (ext === '.zarr') {
+        if (variable) {
+          zarr().loadGroup(source, (error, data, metadata) => {
+            validateGroup(data, variable)
+
+            if (!bounds && data[lat] && data[lon]) {
+              boundsRef.current = getBounds({ data, lat, lon })
             }
-          }
-          zarrGroupCache.current = data
-          isLoaded.current = true
-          texture.current(zarrGroupCache.current[variable])
-          redraw.current('on zarr group load')
-        })
+            zarrGroupCache.current = data
+            isLoaded.current = true
+            texture.current(zarrGroupCache.current[variable])
+            redraw.current('on zarr group load')
+          })
+        } else {
+          zarr().load(source, (error, data) => {
+            isLoaded.current = true
+            texture.current(data)
+            redraw.current('on zarr array load')
+          })
+        }
+      }
+      // handle loading synchronously from pre-fetched zarr data
+    } else {
+      if (variable) {
+        validateGroup(source, variable)
+
+        if (!bounds && source[lat] && source[lon]) {
+          boundsRef.current = getBounds({ data: source, lat, lon })
+        }
+
+        zarrGroupCache.current = source
+        isLoaded.current = true
+        texture.current(zarrGroupCache.current[variable])
+        redraw.current('on zarr group read')
       } else {
-        zarr().load(source, (error, data) => {
-          isLoaded.current = true
-          texture.current(data)
-          redraw.current('on zarr array load')
-        })
+        isLoaded.current = true
+        texture.current(source)
+        redraw.current('on zarr array read')
       }
     }
   }, [source, lat, lon])
@@ -292,14 +328,22 @@ const Raster = ({
   }, [variable])
 
   useEffect(() => {
-    boundsRef.current = bounds
-    redraw.current('on variable change')
+    if (bounds) {
+      boundsRef.current = bounds
+    }
+    redraw.current('on bounds change')
   }, [
     bounds && bounds.lat[0],
     bounds && bounds.lat[1],
     bounds && bounds.lon[0],
     bounds && bounds.lon[1],
   ])
+
+  useEffect(() => {
+    if (isSync && isRenderingSync) {
+      redraw.current('rendering sync')
+    }
+  }, [isSync, isRenderingSync])
 
   useEffect(() => {
     if (colormap) {
