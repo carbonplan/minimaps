@@ -4,6 +4,31 @@ import { useRegl } from './regl'
 import { useMinimap } from './minimap'
 import zarr from 'zarr-js'
 
+const validateGroup = (data, variable) => {
+  if (!Object.keys(data).includes(variable)) {
+    throw new Error(
+      `variable ${variable} not found in zarr dataset, options are: ${Object.keys(
+        data
+      )}`
+    )
+  }
+
+  return true
+}
+
+const getBounds = ({ data, lat, lon }) => {
+  return {
+    lat: [
+      data[lat].data.reduce((a, b) => Math.min(a, b)),
+      data[lat].data.reduce((a, b) => Math.max(a, b)),
+    ],
+    lon: [
+      data[lon].data.reduce((a, b) => Math.min(a, b)),
+      data[lon].data.reduce((a, b) => Math.max(a, b)),
+    ],
+  }
+}
+
 const Raster = ({
   source,
   variable,
@@ -33,9 +58,9 @@ const Raster = ({
   const lut = useRef()
   const context = useRef({})
   const isLoaded = useRef(false)
-  const isRendering = useRef(false)
   const boundsRef = useRef(null)
   const zarrGroupCache = useRef()
+  const invalidated = useRef(null)
 
   useEffect(() => {
     texture.current = regl.texture({
@@ -197,14 +222,16 @@ const Raster = ({
 
     regl.frame((_context) => {
       context.current = _context
-      if (!isRendering.current) {
-        isRendering.current = true
+
+      if (invalidated.current) {
+        redraw.current(invalidated.current)
       }
+      invalidated.current = null
     })
   }, [])
 
-  redraw.current = (caller) => {
-    if (draw.current && isLoaded.current && isRendering.current) {
+  redraw.current = (invalidatedBy) => {
+    if (draw.current && isLoaded.current) {
       const { viewportWidth, viewportHeight, pixelRatio } = context.current
       draw.current({
         texture: texture.current,
@@ -229,56 +256,63 @@ const Raster = ({
   }
 
   useEffect(() => {
-    const ext = extname(source)
+    // handle loading asynchronously from a specified path
+    if (typeof source === 'string') {
+      const ext = extname(source)
 
-    // handle images
-    if (['.png', '.jpg', '.jpeg'].includes(ext)) {
-      const image = document.createElement('img')
-      image.src = source
-      image.crossOrigin = 'anonymous'
-      image.onload = function () {
-        setTimeout(() => {
-          isLoaded.current = true
-          texture.current(image)
-          redraw.current('on image load')
-        }, 0)
+      // handle images
+      if (['.png', '.jpg', '.jpeg'].includes(ext)) {
+        const image = document.createElement('img')
+        image.src = source
+        image.crossOrigin = 'anonymous'
+        image.onload = function () {
+          setTimeout(() => {
+            isLoaded.current = true
+            texture.current(image)
+            invalidated.current = 'on image load'
+          }, 0)
+        }
       }
-    }
 
-    // handle zarr groups and arrays
-    if (ext === '.zarr') {
-      if (variable) {
-        zarr().loadGroup(source, (error, data, metadata) => {
-          if (!Object.keys(data).includes(variable)) {
-            throw new Error(
-              `variable ${variable} not found in zarr dataset, options are: ${Object.keys(
-                data
-              )}`
-            )
-          }
-          if (!bounds && data[lat] && data[lon]) {
-            boundsRef.current = {
-              lat: [
-                data[lat].data.reduce((a, b) => Math.min(a, b)),
-                data[lat].data.reduce((a, b) => Math.max(a, b)),
-              ],
-              lon: [
-                data[lon].data.reduce((a, b) => Math.min(a, b)),
-                data[lon].data.reduce((a, b) => Math.max(a, b)),
-              ],
+      // handle zarr groups and arrays
+      if (ext === '.zarr') {
+        if (variable) {
+          zarr().loadGroup(source, (error, data, metadata) => {
+            validateGroup(data, variable)
+
+            if (!bounds && data[lat] && data[lon]) {
+              boundsRef.current = getBounds({ data, lat, lon })
             }
-          }
-          zarrGroupCache.current = data
-          isLoaded.current = true
-          texture.current(zarrGroupCache.current[variable])
-          redraw.current('on zarr group load')
-        })
+            zarrGroupCache.current = data
+            isLoaded.current = true
+            texture.current(zarrGroupCache.current[variable])
+            invalidated.current = 'on zarr group load'
+          })
+        } else {
+          zarr().load(source, (error, data) => {
+            isLoaded.current = true
+            texture.current(data)
+            invalidated.current = 'on zarr array load'
+          })
+        }
+      }
+      // handle loading synchronously from pre-fetched zarr data
+    } else {
+      if (variable) {
+        validateGroup(source, variable)
+
+        if (!bounds && source[lat] && source[lon]) {
+          boundsRef.current = getBounds({ data: source, lat, lon })
+        }
+
+        zarrGroupCache.current = source
+        isLoaded.current = true
+        texture.current(zarrGroupCache.current[variable])
+        invalidated.current = 'on zarr group read'
       } else {
-        zarr().load(source, (error, data) => {
-          isLoaded.current = true
-          texture.current(data)
-          redraw.current('on zarr array load')
-        })
+        isLoaded.current = true
+        texture.current(source)
+        invalidated.current = 'on zarr array read'
       }
     }
   }, [source, lat, lon])
@@ -287,13 +321,15 @@ const Raster = ({
     // handle variable change on cached zarr group data
     if (zarrGroupCache.current) {
       texture.current(zarrGroupCache.current[variable])
-      redraw.current('on variable change')
+      invalidated.current = 'on variable change'
     }
   }, [variable])
 
   useEffect(() => {
-    boundsRef.current = bounds
-    redraw.current('on variable change')
+    if (bounds) {
+      boundsRef.current = bounds
+    }
+    invalidated.current = 'on bounds change'
   }, [
     bounds && bounds.lat[0],
     bounds && bounds.lat[1],
@@ -308,14 +344,15 @@ const Raster = ({
         format: 'rgb',
         shape: [colormap.length, 1],
       })
-      redraw.current('on colormap change')
+      invalidated.current = 'on colormap change'
     }
   }, [colormap])
 
   useEffect(() => {
-    redraw.current('on prop change')
+    invalidated.current = 'on prop change'
   }, [
     clim && clim[0],
+    clim && clim[1],
     mode,
     scale,
     translate[0],
