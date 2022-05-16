@@ -352,6 +352,7 @@ const Raster = ({
     invalidated.current = 'on prop change'
   }, [
     clim && clim[0],
+    clim && clim[1],
     mode,
     scale,
     translate[0],
