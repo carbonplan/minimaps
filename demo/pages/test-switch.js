@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Minimap, Graticule, Path, Sphere, Raster } from '@carbonplan/minimaps'
 import {
   naturalEarth1,
@@ -14,51 +14,43 @@ import { datasets } from '../datasets'
 const Test = () => {
   const { theme } = useThemeUI()
   const { primary, background } = theme.colors
-  const [clim, setClim] = useState(3000)
+  const [dataset, setDataset] = useState('gcm_chile.zarr')
   const [scale, setScale] = useState(1)
-  const [variable, setVariable] = useState('netcostpertonfeed')
   const colormap = useThemedColormap('cool', { count: 255, format: 'rgb' })
+
+  useEffect(() => {
+    if (dataset === 'gcm_chile.zarr') {
+      setScale(1)
+    } else {
+      setScale(2)
+    }
+  }, [dataset])
 
   return (
     <>
-      <Slider
-        sx={{ width: '200px', mt: [4], ml: [4] }}
-        value={clim}
-        min={0}
-        max={6000}
-        onChange={(e) => setClim(parseFloat(e.target.value))}
-      />
-      <Slider
-        sx={{ width: '200px', mt: [4], ml: [4] }}
-        step={0.01}
-        value={scale}
-        min={0.1}
-        max={3}
-        onChange={(e) => setScale(parseFloat(e.target.value))}
-      />
       <Select
         sx={{ width: '200px', mt: [2], ml: [4] }}
-        onChange={(e) => setVariable(e.target.value)}
+        onChange={(e) => setDataset(e.target.value)}
       >
-        <option value='netcostpertonfeed'>netcostpertonfeed</option>
-        <option value='netcostpertonfood'>netcostpertonfood</option>
+        <option value='gcm_chile.zarr'>chile</option>
+        <option value='gcm_westus.zarr'>westus</option>
       </Select>
-      <Box sx={{ width: '50%', mt: [6] }}>
-        <Minimap projection={naturalEarth1} scale={scale}>
+
+      <Box sx={{ width: '50%', ml: [4], mt: [6], mb: [3] }}>
+        <Minimap projection={equirectangular} scale={scale} translate={[0, 0]}>
           <Path
             stroke={'white'}
             source={datasets['land-110m.json']}
             feature={'land'}
           />
-          <Graticule stroke={primary} />
           <Sphere fill={background} />
           <Raster
-            source={datasets['seaweed_farming_costs.zarr']}
+            source={datasets[dataset]}
             colormap={colormap}
             mode={'lut'}
-            clim={[0, clim]}
+            clim={[280, 310]}
             nullValue={9.969209968386869e36}
-            variable={variable}
+            variable={'tasmax'}
           />
         </Minimap>
       </Box>
