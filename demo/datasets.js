@@ -9,6 +9,6 @@ export const datasets = {
     'https://storage.googleapis.com/carbonplan-macroalgae/data/processed/article/costs.zarr',
   'gcm_westus.zarr':
     'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/westus/gcm-tasmax.zarr',
-  'gcm_chile.zarr':
-    'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/chile/gcm-tasmax.zarr',
+  'gcm_central-america.zarr':
+    'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr',
 }

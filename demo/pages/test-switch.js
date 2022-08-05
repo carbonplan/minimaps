@@ -14,12 +14,12 @@ import { datasets } from '../datasets'
 const Test = () => {
   const { theme } = useThemeUI()
   const { primary, background } = theme.colors
-  const [dataset, setDataset] = useState('gcm_chile.zarr')
+  const [dataset, setDataset] = useState('gcm_central-america.zarr')
   const [scale, setScale] = useState(1)
   const colormap = useThemedColormap('cool', { count: 255, format: 'rgb' })
 
   useEffect(() => {
-    if (dataset === 'gcm_chile.zarr') {
+    if (dataset === 'gcm_central-america.zarr') {
       setScale(1)
     } else {
       setScale(2)
@@ -32,7 +32,7 @@ const Test = () => {
         sx={{ width: '200px', mt: [2], ml: [4] }}
         onChange={(e) => setDataset(e.target.value)}
       >
-        <option value='gcm_chile.zarr'>chile</option>
+        <option value='gcm_central-america.zarr'>central-america</option>
         <option value='gcm_westus.zarr'>westus</option>
       </Select>
 

@@ -27,7 +27,7 @@ const Test = () => {
           />
           <Sphere fill={background} />
           <Raster
-            source={datasets['gcm_chile.zarr']}
+            source={datasets['gcm_central-america.zarr']}
             colormap={colormap}
             mode={'lut'}
             clim={[280, 310]}

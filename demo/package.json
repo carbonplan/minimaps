@@ -18,6 +18,7 @@
   "dependencies": {
     "@carbonplan/colormaps": "^3.0.2",
     "@carbonplan/components": "^11.3.0",
+    "@carbonplan/minimaps": "^1.1.0",
     "@carbonplan/prism": "^1.0.4",
     "@carbonplan/theme": "^7.0.0",
     "@emotion/react": "^11.7.1",
