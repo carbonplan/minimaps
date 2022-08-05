@@ -287,7 +287,7 @@ const Raster = ({
             isLoaded.current = true
             texture.current(zarrGroupCache.current[variable])
             invalidated.current = 'on zarr group load'
-          }, [variable, lat, lon])
+          })
         } else {
           zarr().load(source, (error, data) => {
             isLoaded.current = true
