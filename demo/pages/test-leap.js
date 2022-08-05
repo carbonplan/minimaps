@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import zarr from 'zarr-js'
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
 import {
@@ -16,6 +16,13 @@ const projections = {
   orthographic,
   mercator,
   equirectangular,
+}
+
+const aspects = {
+  naturalEarth1: 0.5,
+  orthographic: 1,
+  mercator: 1,
+  equirectangular: 0.5,
 }
 
 const DATASET =
@@ -38,8 +45,33 @@ const fetchData = () => {
             lon.data.reduce((a, b) => Math.max(a, b)),
           ],
         }
+        const f = {
+          type: 'Feature',
+          properties: {},
+          geometry: {
+            type: 'LineString',
+            coordinates: [
+              [bounds.lon[0], bounds.lat[0]],
+              [bounds.lon[1], bounds.lat[1]],
+            ],
+          },
+        }
 
-        resolve({ data, bounds })
+        const getMapProps = (projection) => {
+          const aspect = aspects[projection]
+          const p = projections[projection]().fitSize(
+            [Math.PI * (1 / aspect), Math.PI],
+            f
+          )
+          const scale = p.scale()
+          const translate = [
+            p.translate()[0] / Math.PI - 1,
+            ((1 / aspect) * p.translate()[1]) / Math.PI - 1,
+          ]
+
+          return { scale, translate }
+        }
+        resolve({ data, bounds, getMapProps })
       },
       [VARIABLE, 'lat', 'lon']
     )
@@ -52,6 +84,8 @@ const Test = () => {
   const [data, setData] = useState()
   const [bounds, setBounds] = useState()
   const [projection, setProjection] = useState('naturalEarth1')
+  const getMapProps = useRef(null)
+  const [mapProps, setMapProps] = useState({ scale: 1, translate: [0, 0] })
   const [basemaps, setBasemaps] = useState({
     land: true,
     ocean: false,
@@ -61,13 +95,22 @@ const Test = () => {
     fetchData().then((result) => {
       setData(result.data)
       setBounds(result.bounds)
+      getMapProps.current = result.getMapProps
+      setMapProps(getMapProps.current(projection))
     })
   }, [])
+
+  const handleProjectionChange = useCallback((e) => {
+    setProjection(e.target.value)
+    if (getMapProps.current) {
+      setMapProps(getMapProps.current(e.target.value))
+    }
+  })
 
   return (
     <>
       <Box sx={{ width: '200px', mt: [2], ml: [4] }}>
-        <Select onChange={(e) => setProjection(e.target.value)}>
+        <Select onChange={handleProjectionChange} value={projection}>
           <option value='naturalEarth1'>naturalEarth1</option>
           <option value='orthographic'>orthographic</option>
           <option value='mercator'>mercator</option>
@@ -93,11 +136,7 @@ const Test = () => {
 
       <Box sx={{ width: '50%', ml: [4], mt: [6], mb: [3] }}>
         {data && bounds && (
-          <Minimap
-            projection={projections[projection]}
-            scale={1}
-            translate={[0, 0]}
-          >
+          <Minimap {...mapProps} projection={projections[projection]}>
             {basemaps.ocean && (
               <Path
                 fill={theme.colors.background}
