@@ -16,30 +16,42 @@ export const useRegl = () => {
 
 const Regl = ({ style, aspect, children }) => {
   const regl = useRef()
+  const container = useRef(null)
+  const resize = useRef()
   const [ready, setReady] = useState(false)
+  const [viewport, setViewport] = useState({ width: null, height: null })
 
-  const ref = useCallback(
-    (node) => {
-      if (node !== null) {
-        const resize = () => {
-          node.style.height = node.offsetWidth * aspect + 'px'
-        }
-        window.addEventListener('resize', () => {
-          resize()
-        })
-        resize()
+  useEffect(() => {
+    resize.current = () => {
+      container.current.style.height =
+        container.current.offsetWidth * aspect + 'px'
 
-        if (!regl.current) {
-          regl.current = _regl({
-            container: node,
-            extensions: ['OES_texture_float', 'OES_element_index_uint'],
-          })
-          setReady(true)
-        }
-      }
-    },
-    [aspect]
-  )
+      setTimeout(
+        () =>
+          setViewport({
+            height: container.current.offsetWidth
+              ? container.current.offsetWidth * aspect
+              : container.current.style.height,
+            width: container.current.offsetWidth,
+          }),
+        10
+      )
+    }
+    window.addEventListener('resize', resize.current)
+    resize.current()
+
+    if (!regl.current) {
+      regl.current = _regl({
+        container: container.current,
+        extensions: ['OES_texture_float', 'OES_element_index_uint'],
+      })
+      setReady(true)
+    }
+
+    return () => {
+      window.removeEventListener('resize', resize.current)
+    }
+  }, [aspect])
 
   useEffect(() => {
     return () => {
@@ -52,9 +64,10 @@ const Regl = ({ style, aspect, children }) => {
     <ReglContext.Provider
       value={{
         regl: regl.current,
+        viewport,
       }}
     >
-      <div style={{ width: '100%', ...style }} ref={ref} />
+      <div style={{ width: '100%', ...style }} ref={container} />
       {ready && children}
     </ReglContext.Provider>
   )
