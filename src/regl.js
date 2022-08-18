@@ -34,7 +34,7 @@ const Regl = ({ style, aspect, children }) => {
               : container.current.style.height,
             width: container.current.offsetWidth,
           }),
-        10
+        0
       )
     }
     window.addEventListener('resize', resize.current)
