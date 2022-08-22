@@ -1,5 +1,9 @@
 import { useCallback, useEffect, useRef, useState } from 'react'
-import zarr from 'zarr-js'
+import * as zarr from 'zarrita/v2'
+import FetchStore from 'zarrita/storage/fetch'
+import { get } from 'zarrita/ndarray'
+
+import { Blosc, GZip, Zlib, LZ4, Zstd } from 'numcodecs'
 import { Minimap, Path, Sphere, Raster } from '@carbonplan/minimaps'
 import {
   naturalEarth1,
@@ -25,62 +29,84 @@ const aspects = {
   equirectangular: 0.5,
 }
 
+// const DATASET =
+//   'https://storage.googleapis.com/carbonplan-maps/ncview/demo/single_timestep/air_temperature.zarr'
+
 const DATASET =
   'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr'
 
-const fetchData = () => {
-  return new Promise((resolve) =>
-    zarr().loadGroup(DATASET, (error, rawData, metadata) => {
-      const variables = Object.keys(metadata.metadata)
-        .map((k) => k.match(/\w+(?=\/\.zarray)/))
-        .filter(Boolean)
-        .map((a) => a[0])
-        .filter((d) => !['lat', 'lon'].includes(d))
-
-      // temporarily hardcode to always look at first variable
-      const variable = variables[0]
-      const { [variable]: data, lat, lon } = rawData
-
-      const nullValue = metadata.metadata[`${variable}/.zarray`].fill_value
-      const bounds = {
-        lat: [
-          lat.data.reduce((a, b) => Math.min(a, b)),
-          lat.data.reduce((a, b) => Math.max(a, b)),
-        ],
-        lon: [
-          lon.data.reduce((a, b) => Math.min(a, b)),
-          lon.data.reduce((a, b) => Math.max(a, b)),
-        ],
-      }
-      const f = {
-        type: 'Feature',
-        properties: {},
-        geometry: {
-          type: 'LineString',
-          coordinates: [
-            [bounds.lon[0], bounds.lat[0]],
-            [bounds.lon[1], bounds.lat[1]],
-          ],
-        },
-      }
-
-      const getMapProps = (projection) => {
-        const aspect = aspects[projection]
-        const p = projections[projection]().fitSize(
-          [Math.PI * (1 / aspect), Math.PI],
-          f
-        )
-        const scale = p.scale()
-        const translate = [
-          p.translate()[0] / Math.PI - 1,
-          ((1 / aspect) * p.translate()[1]) / Math.PI - 1,
-        ]
-
-        return { scale, translate }
-      }
-      resolve({ nullValue, data, bounds, getMapProps })
-    })
+const getRange = (arr) => {
+  return arr.reduce(
+    ([min, max], d) => [Math.min(min, d), Math.max(max, d)],
+    [Infinity, -Infinity]
   )
+}
+
+const COMPRESSORS = {
+  zlib: Zlib,
+  blosc: Blosc,
+}
+
+const fetchData = async () => {
+  // fetch zmetadata to figure out compression and variables
+  const response = await fetch(`${DATASET}/.zmetadata`)
+  const metadata = await response.json()
+
+  const variables = Object.keys(metadata.metadata)
+    .map((k) => k.match(/\w+(?=\/\.zarray)/))
+    .filter(Boolean)
+    .map((a) => a[0])
+    .filter((d) => !['lat', 'lon'].includes(d))
+
+  // temporarily hardcode to always look at first variable
+  const variable = variables[0]
+  const compressorId = metadata.metadata[`${variable}/.zarray`].compressor.id
+  const compressor = COMPRESSORS[compressorId]
+
+  if (!compressor) {
+    throw new Error(`no compressor found for compressor.id=${compressorId}`)
+  }
+
+  zarr.registry.set(compressor.codecId, () => compressor)
+  const store = new FetchStore(DATASET)
+  const arrs = await Promise.all([
+    zarr.get_array(store, '/' + variable),
+    zarr.get_array(store, '/lat'),
+    zarr.get_array(store, '/lon'),
+  ])
+  const nullValue = arrs[0].fill_value ?? 0
+  const [data, lat, lon] = await Promise.all(arrs.map((arr) => get(arr)))
+  const clim = getRange(data.data)
+
+  const bounds = { lat: getRange(lat.data), lon: getRange(lon.data) }
+
+  const f = {
+    type: 'Feature',
+    properties: {},
+    geometry: {
+      type: 'LineString',
+      coordinates: [
+        [bounds.lon[0], bounds.lat[0]],
+        [bounds.lon[1], bounds.lat[1]],
+      ],
+    },
+  }
+
+  const getMapProps = (projection) => {
+    const aspect = aspects[projection]
+    const p = projections[projection]().fitSize(
+      [Math.PI * (1 / aspect), Math.PI],
+      f
+    )
+    const scale = p.scale()
+    const translate = [
+      p.translate()[0] / Math.PI - 1,
+      ((1 / aspect) * p.translate()[1]) / Math.PI - 1,
+    ]
+
+    return { scale, translate }
+  }
+  return { nullValue, clim, data, bounds, getMapProps }
 }
 
 const Test = () => {
@@ -89,6 +115,7 @@ const Test = () => {
   const [data, setData] = useState()
   const [bounds, setBounds] = useState()
   const [nullValue, setNullValue] = useState()
+  const [clim, setClim] = useState()
   const [projection, setProjection] = useState('naturalEarth1')
   const getMapProps = useRef(null)
   const [mapProps, setMapProps] = useState({ scale: 1, translate: [0, 0] })
@@ -102,6 +129,7 @@ const Test = () => {
       setData(result.data)
       setBounds(result.bounds)
       setNullValue(result.nullValue)
+      setClim(result.clim)
       getMapProps.current = result.getMapProps
       setMapProps(getMapProps.current(projection))
     })
@@ -142,7 +170,7 @@ const Test = () => {
       </Box>
 
       <Box sx={{ width: '50%', ml: [4], mt: [6], mb: [3] }}>
-        {data && bounds && (
+        {data && bounds && clim && (
           <Minimap {...mapProps} projection={projections[projection]}>
             {basemaps.ocean && (
               <Path
@@ -173,7 +201,7 @@ const Test = () => {
               bounds={bounds}
               colormap={colormap}
               mode={'lut'}
-              clim={[280, 310]}
+              clim={clim}
               nullValue={nullValue}
             />
           </Minimap>
