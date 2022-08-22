@@ -27,54 +27,59 @@ const aspects = {
 
 const DATASET =
   'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr'
-const VARIABLE = 'tasmax'
-const NAN = 9.969209968386869e36
 
 const fetchData = () => {
   return new Promise((resolve) =>
-    zarr().loadGroup(
-      DATASET,
-      (error, { [VARIABLE]: data, lat, lon }) => {
-        const bounds = {
-          lat: [
-            lat.data.reduce((a, b) => Math.min(a, b)),
-            lat.data.reduce((a, b) => Math.max(a, b)),
-          ],
-          lon: [
-            lon.data.reduce((a, b) => Math.min(a, b)),
-            lon.data.reduce((a, b) => Math.max(a, b)),
-          ],
-        }
-        const f = {
-          type: 'Feature',
-          properties: {},
-          geometry: {
-            type: 'LineString',
-            coordinates: [
-              [bounds.lon[0], bounds.lat[0]],
-              [bounds.lon[1], bounds.lat[1]],
-            ],
-          },
-        }
+    zarr().loadGroup(DATASET, (error, rawData, metadata) => {
+      const variables = Object.keys(metadata.metadata)
+        .map((k) => k.match(/\w+(?=\/\.zarray)/))
+        .filter(Boolean)
+        .map((a) => a[0])
+        .filter((d) => !['lat', 'lon'].includes(d))
 
-        const getMapProps = (projection) => {
-          const aspect = aspects[projection]
-          const p = projections[projection]().fitSize(
-            [Math.PI * (1 / aspect), Math.PI],
-            f
-          )
-          const scale = p.scale()
-          const translate = [
-            p.translate()[0] / Math.PI - 1,
-            ((1 / aspect) * p.translate()[1]) / Math.PI - 1,
-          ]
+      // temporarily hardcode to always look at first variable
+      const variable = variables[0]
+      const { [variable]: data, lat, lon } = rawData
 
-          return { scale, translate }
-        }
-        resolve({ data, bounds, getMapProps })
-      },
-      [VARIABLE, 'lat', 'lon']
-    )
+      const nullValue = metadata.metadata[`${variable}/.zarray`].fill_value
+      const bounds = {
+        lat: [
+          lat.data.reduce((a, b) => Math.min(a, b)),
+          lat.data.reduce((a, b) => Math.max(a, b)),
+        ],
+        lon: [
+          lon.data.reduce((a, b) => Math.min(a, b)),
+          lon.data.reduce((a, b) => Math.max(a, b)),
+        ],
+      }
+      const f = {
+        type: 'Feature',
+        properties: {},
+        geometry: {
+          type: 'LineString',
+          coordinates: [
+            [bounds.lon[0], bounds.lat[0]],
+            [bounds.lon[1], bounds.lat[1]],
+          ],
+        },
+      }
+
+      const getMapProps = (projection) => {
+        const aspect = aspects[projection]
+        const p = projections[projection]().fitSize(
+          [Math.PI * (1 / aspect), Math.PI],
+          f
+        )
+        const scale = p.scale()
+        const translate = [
+          p.translate()[0] / Math.PI - 1,
+          ((1 / aspect) * p.translate()[1]) / Math.PI - 1,
+        ]
+
+        return { scale, translate }
+      }
+      resolve({ nullValue, data, bounds, getMapProps })
+    })
   )
 }
 
@@ -83,6 +88,7 @@ const Test = () => {
   const colormap = useThemedColormap('cool', { count: 255, format: 'rgb' })
   const [data, setData] = useState()
   const [bounds, setBounds] = useState()
+  const [nullValue, setNullValue] = useState()
   const [projection, setProjection] = useState('naturalEarth1')
   const getMapProps = useRef(null)
   const [mapProps, setMapProps] = useState({ scale: 1, translate: [0, 0] })
@@ -95,6 +101,7 @@ const Test = () => {
     fetchData().then((result) => {
       setData(result.data)
       setBounds(result.bounds)
+      setNullValue(result.nullValue)
       getMapProps.current = result.getMapProps
       setMapProps(getMapProps.current(projection))
     })
@@ -167,7 +174,7 @@ const Test = () => {
               colormap={colormap}
               mode={'lut'}
               clim={[280, 310]}
-              nullValue={NAN}
+              nullValue={nullValue}
             />
           </Minimap>
         )}
