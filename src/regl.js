@@ -26,16 +26,12 @@ const Regl = ({ style, aspect, children }) => {
       container.current.style.height =
         container.current.offsetWidth * aspect + 'px'
 
-      setTimeout(
-        () =>
-          setViewport({
-            height: container.current.offsetWidth
-              ? container.current.offsetWidth * aspect
-              : container.current.style.height,
-            width: container.current.offsetWidth,
-          }),
-        0
-      )
+      setViewport({
+        height: container.current.offsetWidth
+          ? container.current.offsetWidth * aspect
+          : container.current.style.height,
+        width: container.current.offsetWidth,
+      })
     }
     window.addEventListener('resize', resize.current)
     resize.current()
