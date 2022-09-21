@@ -41,7 +41,7 @@ const Raster = ({
   lat = 'lat',
   lon = 'lon',
 }) => {
-  const { regl } = useRegl()
+  const { viewport, regl } = useRegl()
   const { scale, translate, projection } = useMinimap()
 
   if (mode == 'lut' && !colormap) {
@@ -63,13 +63,29 @@ const Raster = ({
   const invalidated = useRef(null)
 
   useEffect(() => {
-    texture.current = regl.texture({
+    regl.frame((_context) => {
+      context.current = _context
+
+      if (invalidated.current) {
+        regl.clear({
+          color: [0, 0, 0, 0],
+          depth: 1,
+        })
+
+        redraw.current(invalidated.current)
+      }
+      invalidated.current = null
+    })
+  }, [])
+
+  useEffect(() => {
+    texture.current ||= regl.texture({
       width: 1,
       height: 1,
       data: [0, 0, 0, 0],
     })
 
-    lut.current = regl.texture()
+    lut.current ||= regl.texture()
 
     const position = [
       0.0, 0.0, 0.0, 1.0, 1.0, 0.0, 1.0, 0.0, 0.0, 1.0, 1.0, 1.0,
@@ -214,25 +230,11 @@ const Raster = ({
 
       primitive: 'triangles',
     })
-
-    regl.clear({
-      color: [0, 0, 0, 0],
-      depth: 1,
-    })
-
-    regl.frame((_context) => {
-      context.current = _context
-
-      if (invalidated.current) {
-        redraw.current(invalidated.current)
-      }
-      invalidated.current = null
-    })
-  }, [])
+  }, [projection.glsl.name])
 
   redraw.current = (invalidatedBy) => {
     if (draw.current && isLoaded.current) {
-      const { viewportWidth, viewportHeight, pixelRatio } = context.current
+      const { pixelRatio } = context.current
       draw.current({
         texture: texture.current,
         lut: lut.current,
@@ -248,8 +250,8 @@ const Raster = ({
         translate,
         clim,
         nullValue,
-        viewportWidth,
-        viewportHeight,
+        viewportWidth: viewport.width * pixelRatio,
+        viewportHeight: viewport.height * pixelRatio,
         pixelRatio,
       })
     }
@@ -347,6 +349,10 @@ const Raster = ({
       invalidated.current = 'on colormap change'
     }
   }, [colormap])
+
+  useEffect(() => {
+    invalidated.current = 'on viewport change'
+  }, [viewport])
 
   useEffect(() => {
     invalidated.current = 'on prop change'
