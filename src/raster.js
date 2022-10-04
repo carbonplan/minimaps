@@ -181,16 +181,21 @@ const Raster = ({
         float translateY = 90.0 + bounds[0];
         float translateX = 180.0 + bounds[2];
 
+        float offsetX = 0.0;
+        if (lookup.x < bounds[2]) {
+          offsetX = 360.0;
+        }
+
         ${
           transpose
-            ? `rescaled = vec2(scaleX * (radians(lookup.x - translateX) + pi) / twoPi, scaleY * (radians(lookup.y - translateY) + halfPi) / (pi));`
-            : `rescaled = vec2(scaleY * (radians(lookup.y - translateY) + halfPi) / (pi), scaleX * (radians(lookup.x - translateX) + pi) / twoPi);`
+            ? `rescaled = vec2(scaleX * (radians(lookup.x + offsetX - translateX) + pi) / twoPi, scaleY * (radians(lookup.y - translateY) + halfPi) / (pi));`
+            : `rescaled = vec2(scaleY * (radians(lookup.y - translateY) + halfPi) / (pi), scaleX * (radians(lookup.x + offsetX - translateX) + pi) / twoPi);`
         }
 
         vec4 value = texture2D(texture, rescaled);
 
         bool inboundsY = lookup.y > bounds[0] && lookup.y < bounds[1];
-        bool inboundsX = lookup.x > bounds[2] && lookup.x < bounds[3];
+        bool inboundsX = lookup.x + offsetX > bounds[2] && lookup.x + offsetX < bounds[3];
 
         ${
           mode === 'lut'
@@ -200,7 +205,7 @@ const Raster = ({
             gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
           } else {
             float rescaled = (value.x - clim.x)/(clim.y - clim.x);
-            c = texture2D(lut, vec2(rescaled, 1.0));  
+            c = texture2D(lut, vec2(rescaled, 1.0));
             gl_FragColor = vec4(c.x, c.y, c.z, 1.0);
           }`
             : ''
