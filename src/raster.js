@@ -178,8 +178,8 @@ const Raster = ({
 
         float scaleY = 180.0 / abs(bounds[0] - bounds[1]);
         float scaleX = 360.0 / abs(bounds[2] - bounds[3]);
-        float translateY = bounds[0];
-        float translateX = bounds[2];
+        float translateY = 90.0 + bounds[0];
+        float translateX = 180.0 + bounds[2];
 
         float offsetX = 0.0;
         if (lookup.x < bounds[2]) {
@@ -188,8 +188,8 @@ const Raster = ({
 
         ${
           transpose
-            ? `coord = vec2(scaleX * radians(lookup.x + offsetX - translateX) / twoPi, scaleY * radians(lookup.y - translateY) / pi);`
-            : `coord = vec2(scaleY * radians(lookup.y - translateY) / pi, scaleX * radians(lookup.x + offsetX - translateX) / twoPi);`
+            ? `coord = vec2(scaleX * (radians(lookup.x + offsetX - translateX) + pi) / twoPi, scaleY * (radians(lookup.y - translateY) + halfPi) / (pi));`
+            : `coord = vec2(scaleY * (radians(lookup.y - translateY) + halfPi) / (pi), scaleX * (radians(lookup.x + offsetX - translateX) + pi) / twoPi);`
         }
 
         vec4 value = texture2D(texture, coord);
