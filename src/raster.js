@@ -36,6 +36,7 @@ const Raster = ({
   colormap = null,
   clim = null,
   transpose,
+  northPole = [0, 90],
   nullValue = -999,
   bounds = null,
   lat = 'lat',
@@ -98,6 +99,7 @@ const Raster = ({
       texture: regl.prop('texture'),
       scale: regl.prop('scale'),
       translate: regl.prop('translate'),
+      northPole: regl.prop('northPole'),
       transpose: regl.prop('transpose'),
       nullValue: regl.prop('nullValue'),
       bounds: regl.prop('bounds'),
@@ -141,6 +143,7 @@ const Raster = ({
       uniform float pixelRatio;
       uniform float scale;
       uniform vec2 translate;
+      uniform vec2 northPole;
       uniform bool transpose;
       uniform float nullValue;
       ${mode === 'lut' ? 'uniform sampler2D lut;' : ''}
@@ -174,28 +177,49 @@ const Raster = ({
 
         vec2 lookup = ${projection.glsl.name}(x, y);
 
-        vec2 coord;
+        float theta = -1.0 * (90.0 + northPole.y);
+        float phi = -1.0 * northPole.x;
+
+        float lat = radians(lookup.y);
+        float lon = radians(lookup.x);
+
+        vec3 unrotatedCoord = vec3(cos(lon) * cos(lat), sin(lon) * cos(lat), sin(lat));
+
+        mat3 rotation = mat3(
+          cos(theta) * cos(phi), -1.0 * cos(theta) * sin(phi), sin(theta),
+          -1.0 * sin(phi)             , cos(phi)                    , 0                ,
+          -1.0 * sin(theta) * cos(phi), -1.0 * sin(theta) * sin(phi), cos(theta)
+        );
+
+        vec3 rotatedCoord = rotation * unrotatedCoord;
+
+        float rotatedY = degrees(asin(rotatedCoord.z));
+        float rotatedX = degrees(atan(rotatedCoord.y, rotatedCoord.x));
+
+        float offsetX = 0.0;
+        if (rotatedX < bounds[2]) {
+          offsetX = 360.0;
+        }
 
         float scaleY = 180.0 / abs(bounds[0] - bounds[1]);
         float scaleX = 360.0 / abs(bounds[2] - bounds[3]);
         float translateY = 90.0 + bounds[0];
         float translateX = 180.0 + bounds[2];
 
-        float offsetX = 0.0;
-        if (lookup.x < bounds[2]) {
-          offsetX = 360.0;
-        }
+        float rescaledY = scaleY * (radians(rotatedY - translateY) + halfPi) / pi;
+        float rescaledX = scaleX * (radians(rotatedX + offsetX - translateX) + pi) / twoPi;
 
+        vec2 coord;
         ${
           transpose
-            ? `coord = vec2(scaleX * (radians(lookup.x + offsetX - translateX) + pi) / twoPi, scaleY * (radians(lookup.y - translateY) + halfPi) / (pi));`
-            : `coord = vec2(scaleY * (radians(lookup.y - translateY) + halfPi) / (pi), scaleX * (radians(lookup.x + offsetX - translateX) + pi) / twoPi);`
+            ? `coord = vec2(rescaledX, rescaledY);`
+            : `coord = vec2(rescaledY, rescaledX);`
         }
 
         vec4 value = texture2D(texture, coord);
 
-        bool inboundsY = lookup.y > bounds[0] && lookup.y < bounds[1];
-        bool inboundsX = lookup.x + offsetX > bounds[2] && lookup.x + offsetX < bounds[3];
+        bool inboundsY = rotatedY > bounds[0] && rotatedY < bounds[1];
+        bool inboundsX = rotatedX + offsetX > bounds[2] && rotatedX + offsetX < bounds[3];
 
         ${
           mode === 'lut'
@@ -253,6 +277,7 @@ const Raster = ({
           : [-90, 90, -180, 180],
         scale,
         translate,
+        northPole,
         clim,
         nullValue,
         viewportWidth: viewport.width * pixelRatio,
@@ -368,6 +393,8 @@ const Raster = ({
     scale,
     translate[0],
     translate[1],
+    northPole?.at(0),
+    northPole?.at(1),
     nullValue,
     projection,
   ])
