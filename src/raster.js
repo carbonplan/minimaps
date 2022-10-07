@@ -29,6 +29,8 @@ const getBounds = ({ data, lat, lon }) => {
   }
 }
 
+const NORTH_POLE = [0, 90]
+
 const Raster = ({
   source,
   variable,
@@ -36,7 +38,7 @@ const Raster = ({
   colormap = null,
   clim = null,
   transpose,
-  northPole = [0, 90],
+  northPole = NORTH_POLE,
   nullValue = -999,
   bounds = null,
   lat = 'lat',
