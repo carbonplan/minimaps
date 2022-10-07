@@ -188,8 +188,8 @@ const Raster = ({
         vec3 unrotatedCoord = vec3(cos(lon) * cos(lat), sin(lon) * cos(lat), sin(lat));
 
         mat3 rotation = mat3(
-          cos(theta) * cos(phi), -1.0 * cos(theta) * sin(phi), sin(theta),
-          -1.0 * sin(phi)             , cos(phi)                    , 0                ,
+          cos(theta) * cos(phi)       , -1.0 * cos(theta) * sin(phi), sin(theta),
+          -1.0 * sin(phi)             , cos(phi)                    , 0         ,
           -1.0 * sin(theta) * cos(phi), -1.0 * sin(theta) * sin(phi), cos(theta)
         );
 
