@@ -179,14 +179,17 @@ const Raster = ({
 
         vec2 lookup = ${projection.glsl.name}(x, y);
 
+        // Calculate rotation based of north pole coordinates of rotated grid
         float theta = -1.0 * (90.0 + northPole.y);
         float phi = -1.0 * northPole.x;
 
         float lat = radians(lookup.y);
         float lon = radians(lookup.x);
 
+        // Convert from spherical to cartesian coordinates
         vec3 unrotatedCoord = vec3(cos(lon) * cos(lat), sin(lon) * cos(lat), sin(lat));
 
+        // Rotation matrix
         mat3 rotation = mat3(
           cos(theta) * cos(phi)       , -1.0 * cos(theta) * sin(phi), sin(theta),
           -1.0 * sin(phi)             , cos(phi)                    , 0         ,
@@ -195,9 +198,11 @@ const Raster = ({
 
         vec3 rotatedCoord = rotation * unrotatedCoord;
 
+        // Convert from cartesian to spherical coordinates
         float rotatedY = degrees(asin(rotatedCoord.z));
         float rotatedX = degrees(atan(rotatedCoord.y, rotatedCoord.x));
 
+        // Handle points that wrap
         float offsetX = 0.0;
         if (rotatedX < bounds[2]) {
           offsetX = 360.0;
