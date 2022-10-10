@@ -180,8 +180,8 @@ const Raster = ({
         vec2 lookup = ${projection.glsl.name}(x, y);
 
         // Calculate rotation based of north pole coordinates of rotated grid
-        float theta = -1.0 * (90.0 + northPole.y);
-        float phi = -1.0 * northPole.x;
+        float theta = radians(90.0 - northPole.y);
+        float phi = radians(-1.0 * northPole.x);
 
         float lat = radians(lookup.y);
         float lon = radians(lookup.x);
@@ -189,7 +189,7 @@ const Raster = ({
         // Convert from spherical to cartesian coordinates
         vec3 unrotatedCoord = vec3(cos(lon) * cos(lat), sin(lon) * cos(lat), sin(lat));
 
-        // Rotation matrix
+        // Rotation matrix based on https://www.mathworks.com/matlabcentral/fileexchange/43435-rotated-grid-transform
         mat3 rotation = mat3(
           cos(theta) * cos(phi)       , cos(theta) * sin(phi)       , sin(theta),
           -1.0 * sin(phi)             , cos(phi)                    , 0         ,
