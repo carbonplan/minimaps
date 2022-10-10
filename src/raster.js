@@ -191,7 +191,7 @@ const Raster = ({
 
         // Rotation matrix
         mat3 rotation = mat3(
-          cos(theta) * cos(phi)       , -1.0 * cos(theta) * sin(phi), sin(theta),
+          cos(theta) * cos(phi)       , cos(theta) * sin(phi)       , sin(theta),
           -1.0 * sin(phi)             , cos(phi)                    , 0         ,
           -1.0 * sin(theta) * cos(phi), -1.0 * sin(theta) * sin(phi), cos(theta)
         );
