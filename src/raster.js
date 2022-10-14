@@ -189,14 +189,14 @@ const Raster = ({
         // Convert from spherical to cartesian coordinates
         vec3 unrotatedCoord = vec3(cos(lon) * cos(lat), sin(lon) * cos(lat), sin(lat));
 
-        // Rotation matrix based on https://www.mathworks.com/matlabcentral/fileexchange/43435-rotated-grid-transform
-        mat3 rotation = mat3(
-          cos(theta) * cos(phi)       , cos(theta) * sin(phi)       , sin(theta),
-          -1.0 * sin(phi)             , cos(phi)                    , 0         ,
-          -1.0 * sin(theta) * cos(phi), -1.0 * sin(theta) * sin(phi), cos(theta)
+        // From https://en.wikipedia.org/wiki/Rotation_matrix#General_rotations
+        mat3 intrinsicRotation = mat3(
+          cos(phi) * cos(theta), -1.0 * sin(phi), cos(phi) * sin(theta),
+          sin(phi) * cos(theta), cos(phi)       , sin(phi) * sin(theta),
+          -1.0 * sin(theta)    , 0              , cos(theta)
         );
 
-        vec3 rotatedCoord = rotation * unrotatedCoord;
+        vec3 rotatedCoord = intrinsicRotation * unrotatedCoord;
 
         // Convert from cartesian to spherical coordinates
         float rotatedY = degrees(asin(rotatedCoord.z));
