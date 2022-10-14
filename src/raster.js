@@ -206,6 +206,8 @@ const Raster = ({
         float offsetX = 0.0;
         if (rotatedX < bounds[2]) {
           offsetX = 360.0;
+        } else if (rotatedX > bounds[3]) {
+          offsetX = -360.0;
         }
 
         float scaleY = 180.0 / abs(bounds[0] - bounds[1]);
