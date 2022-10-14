@@ -160,6 +160,33 @@ const Raster = ({
         return ( val < 0.0 || 0.0 < val || val == 0.0 ) ? false : true;
       }
 
+      vec2 rotateCoords(vec2 coords, vec2 northPole) {
+        // Calculate rotation based of north pole coordinates of rotated grid
+        float phi = radians(-1.0 * northPole.x);
+        float theta = radians(-1.0 * (90.0 - northPole.y));
+
+        float lon = radians(coords.x);
+        float lat = radians(coords.y);
+
+        // Convert from spherical to cartesian coordinates
+        vec3 unrotatedCoord = vec3(cos(lon) * cos(lat), sin(lon) * cos(lat), sin(lat));
+
+        // From https://en.wikipedia.org/wiki/Rotation_matrix#General_rotations
+        mat3 intrinsicRotation = mat3(
+          cos(phi) * cos(theta), -1.0 * sin(phi), cos(phi) * sin(theta),
+          sin(phi) * cos(theta), cos(phi)       , sin(phi) * sin(theta),
+          -1.0 * sin(theta)    , 0              , cos(theta)
+        );
+
+        vec3 rotatedCoord = intrinsicRotation * unrotatedCoord;
+
+        // Convert from cartesian to spherical coordinates
+        float rotatedLon = degrees(atan(rotatedCoord.y, rotatedCoord.x));
+        float rotatedLat = degrees(asin(rotatedCoord.z));
+
+        return vec2(rotatedLon, rotatedLat);
+      }
+
       ${projection.glsl.func}
       void main() {
         
@@ -178,35 +205,13 @@ const Raster = ({
         }
 
         vec2 lookup = ${projection.glsl.name}(x, y);
-
-        // Calculate rotation based of north pole coordinates of rotated grid
-        float theta = radians(90.0 - northPole.y);
-        float phi = radians(-1.0 * northPole.x);
-
-        float lat = radians(lookup.y);
-        float lon = radians(lookup.x);
-
-        // Convert from spherical to cartesian coordinates
-        vec3 unrotatedCoord = vec3(cos(lon) * cos(lat), sin(lon) * cos(lat), sin(lat));
-
-        // From https://en.wikipedia.org/wiki/Rotation_matrix#General_rotations
-        mat3 intrinsicRotation = mat3(
-          cos(phi) * cos(theta), -1.0 * sin(phi), cos(phi) * sin(theta),
-          sin(phi) * cos(theta), cos(phi)       , sin(phi) * sin(theta),
-          -1.0 * sin(theta)    , 0              , cos(theta)
-        );
-
-        vec3 rotatedCoord = intrinsicRotation * unrotatedCoord;
-
-        // Convert from cartesian to spherical coordinates
-        float rotatedY = degrees(asin(rotatedCoord.z));
-        float rotatedX = degrees(atan(rotatedCoord.y, rotatedCoord.x));
+        vec2 rotated = rotateCoords(lookup, northPole);
 
         // Handle points that wrap
         float offsetX = 0.0;
-        if (rotatedX < bounds[2]) {
+        if (rotated.x < bounds[2]) {
           offsetX = 360.0;
-        } else if (rotatedX > bounds[3]) {
+        } else if (rotated.x > bounds[3]) {
           offsetX = -360.0;
         }
 
@@ -215,8 +220,8 @@ const Raster = ({
         float translateY = 90.0 + bounds[0];
         float translateX = 180.0 + bounds[2];
 
-        float rescaledY = scaleY * (radians(rotatedY - translateY) + halfPi) / pi;
-        float rescaledX = scaleX * (radians(rotatedX + offsetX - translateX) + pi) / twoPi;
+        float rescaledY = scaleY * (radians(rotated.y - translateY) + halfPi) / pi;
+        float rescaledX = scaleX * (radians(rotated.x + offsetX - translateX) + pi) / twoPi;
 
         vec2 coord;
         ${
@@ -227,8 +232,8 @@ const Raster = ({
 
         vec4 value = texture2D(texture, coord);
 
-        bool inboundsY = rotatedY > bounds[0] && rotatedY < bounds[1];
-        bool inboundsX = rotatedX + offsetX > bounds[2] && rotatedX + offsetX < bounds[3];
+        bool inboundsY = rotated.y > bounds[0] && rotated.y < bounds[1];
+        bool inboundsX = rotated.x + offsetX > bounds[2] && rotated.x + offsetX < bounds[3];
 
         ${
           mode === 'lut'
