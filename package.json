@@ -1,7 +1,7 @@
 {
   "name": "@carbonplan/minimaps",
   "type": "module",
-  "version": "1.2.0",
+  "version": "2.0.0-develop.0",
   "description": "small maps for figures",
   "main": "dst/index.cjs",
   "module": "dst/index.module.js",
