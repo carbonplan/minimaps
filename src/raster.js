@@ -162,7 +162,8 @@ const Raster = ({
 
       vec2 rotateCoords(vec2 coords, vec2 northPole) {
         // Calculate rotation based of north pole coordinates of rotated grid
-        float phi = radians(180.0 + northPole.x); // TODO: avoid hardcoding 180deg offset
+        float phiOffset = northPole.y == 90.0 ? 0.0 : 180.0;
+        float phi = radians(phiOffset + northPole.x);
         float theta = radians(-1.0 * (90.0 - northPole.y));
 
         float lon = radians(coords.x);
