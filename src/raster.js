@@ -29,6 +29,8 @@ const getBounds = ({ data, lat, lon }) => {
   }
 }
 
+const NORTH_POLE = [0, 90]
+
 const Raster = ({
   source,
   variable,
@@ -36,6 +38,7 @@ const Raster = ({
   colormap = null,
   clim = null,
   transpose,
+  northPole = NORTH_POLE,
   nullValue = -999,
   bounds = null,
   lat = 'lat',
@@ -98,6 +101,7 @@ const Raster = ({
       texture: regl.prop('texture'),
       scale: regl.prop('scale'),
       translate: regl.prop('translate'),
+      northPole: regl.prop('northPole'),
       transpose: regl.prop('transpose'),
       nullValue: regl.prop('nullValue'),
       bounds: regl.prop('bounds'),
@@ -141,6 +145,7 @@ const Raster = ({
       uniform float pixelRatio;
       uniform float scale;
       uniform vec2 translate;
+      uniform vec2 northPole;
       uniform bool transpose;
       uniform float nullValue;
       ${mode === 'lut' ? 'uniform sampler2D lut;' : ''}
@@ -153,6 +158,34 @@ const Raster = ({
       bool isnan(float val)
       {
         return ( val < 0.0 || 0.0 < val || val == 0.0 ) ? false : true;
+      }
+
+      vec2 rotateCoords(vec2 coords, vec2 northPole) {
+        // Calculate rotation based of north pole coordinates of rotated grid
+        float phiOffset = northPole.y == 90.0 ? 0.0 : 180.0;
+        float phi = radians(phiOffset + northPole.x);
+        float theta = radians(-1.0 * (90.0 - northPole.y));
+
+        float lon = radians(coords.x);
+        float lat = radians(coords.y);
+
+        // Convert from spherical to cartesian coordinates
+        vec3 unrotatedCoord = vec3(cos(lon) * cos(lat), sin(lon) * cos(lat), sin(lat));
+
+        // From https://en.wikipedia.org/wiki/Rotation_matrix#General_rotations
+        mat3 intrinsicRotation = mat3(
+          cos(phi) * cos(theta), -1.0 * sin(phi), cos(phi) * sin(theta),
+          sin(phi) * cos(theta), cos(phi)       , sin(phi) * sin(theta),
+          -1.0 * sin(theta)    , 0              , cos(theta)
+        );
+
+        vec3 rotatedCoord = intrinsicRotation * unrotatedCoord;
+
+        // Convert from cartesian to spherical coordinates
+        float rotatedLon = degrees(atan(rotatedCoord.y, rotatedCoord.x));
+        float rotatedLat = degrees(asin(rotatedCoord.z));
+
+        return vec2(rotatedLon, rotatedLat);
       }
 
       ${projection.glsl.func}
@@ -173,24 +206,35 @@ const Raster = ({
         }
 
         vec2 lookup = ${projection.glsl.name}(x, y);
+        vec2 rotated = rotateCoords(lookup, northPole);
 
-        vec2 rescaled;
+        // Handle points that wrap
+        float offsetX = 0.0;
+        if (rotated.x < bounds[2]) {
+          offsetX = 360.0;
+        } else if (rotated.x > bounds[3]) {
+          offsetX = -360.0;
+        }
 
         float scaleY = 180.0 / abs(bounds[0] - bounds[1]);
         float scaleX = 360.0 / abs(bounds[2] - bounds[3]);
         float translateY = 90.0 + bounds[0];
         float translateX = 180.0 + bounds[2];
 
+        float rescaledY = scaleY * (radians(rotated.y - translateY) + halfPi) / pi;
+        float rescaledX = scaleX * (radians(rotated.x + offsetX - translateX) + pi) / twoPi;
+
+        vec2 coord;
         ${
           transpose
-            ? `rescaled = vec2(scaleX * (radians(lookup.x - translateX) + pi) / twoPi, scaleY * (radians(lookup.y - translateY) + halfPi) / (pi));`
-            : `rescaled = vec2(scaleY * (radians(lookup.y - translateY) + halfPi) / (pi), scaleX * (radians(lookup.x - translateX) + pi) / twoPi);`
+            ? `coord = vec2(rescaledX, rescaledY);`
+            : `coord = vec2(rescaledY, rescaledX);`
         }
 
-        vec4 value = texture2D(texture, rescaled);
+        vec4 value = texture2D(texture, coord);
 
-        bool inboundsY = lookup.y > bounds[0] && lookup.y < bounds[1];
-        bool inboundsX = lookup.x > bounds[2] && lookup.x < bounds[3];
+        bool inboundsY = rotated.y > bounds[0] && rotated.y < bounds[1];
+        bool inboundsX = rotated.x + offsetX > bounds[2] && rotated.x + offsetX < bounds[3];
 
         ${
           mode === 'lut'
@@ -200,7 +244,7 @@ const Raster = ({
             gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
           } else {
             float rescaled = (value.x - clim.x)/(clim.y - clim.x);
-            c = texture2D(lut, vec2(rescaled, 1.0));  
+            c = texture2D(lut, vec2(rescaled, 1.0));
             gl_FragColor = vec4(c.x, c.y, c.z, 1.0);
           }`
             : ''
@@ -248,6 +292,7 @@ const Raster = ({
           : [-90, 90, -180, 180],
         scale,
         translate,
+        northPole,
         clim,
         nullValue,
         viewportWidth: viewport.width * pixelRatio,
@@ -363,6 +408,8 @@ const Raster = ({
     scale,
     translate[0],
     translate[1],
+    northPole?.at(0),
+    northPole?.at(1),
     nullValue,
     projection,
   ])
