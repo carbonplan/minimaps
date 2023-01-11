@@ -1,4 +1,4 @@
-export { default as Minimap } from './minimap'
+export { default as Minimap, useMinimap } from './minimap'
 export { default as Raster } from './raster'
 export { default as Sphere } from './sphere'
 export { default as Path } from './path'
