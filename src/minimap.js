@@ -36,6 +36,8 @@ export const useMinimap = () => {
   return useContext(MinimapContext)
 }
 
+const WIDTH = 800
+
 const Minimap = ({
   id,
   tabIndex,
@@ -47,45 +49,25 @@ const Minimap = ({
   scale: scaleProp,
   translate: translateProp,
 }) => {
-  const [projection, setProjection] = useState({
-    value: getProjection(),
-    scale: scaleProp,
-    aspect: aspectProp,
-    translate: translateProp,
-  })
-
-  const WIDTH = 800
+  const [projection, setProjection] = useState(getProjection)
+  const defaults = DEFAULTS[projection.id]
+  const aspect = aspectProp || defaults.aspect
+  const height = WIDTH * aspect
 
   useEffect(() => {
     const updatedProjection = getProjection()
-    const defaults = DEFAULTS[updatedProjection.id]
-    const updatedScale = scaleProp || defaults.scale
-    const updatedAspect = aspectProp || defaults.aspect
-    const updatedTranslate = translateProp || defaults.translate
-
-    updatedProjection.scale(updatedScale * (WIDTH / (2 * Math.PI)))
-    updatedProjection.translate([
-      ((1 + updatedTranslate[0]) * WIDTH) / 2,
-      ((1 + updatedTranslate[1]) * updatedAspect * WIDTH) / 2,
-    ])
-
-    setProjection({
-      scale: updatedScale,
-      aspect: updatedAspect,
-      value: updatedProjection,
-      translate: updatedTranslate,
-    })
-  }, [getProjection, scaleProp, aspectProp, translateProp])
+    setProjection(() => updatedProjection)
+  }, [getProjection])
 
   return (
     <MinimapContext.Provider
       value={{
-        projection: projection.value,
-        translate: projection.translate,
-        scale: projection.scale,
-        aspect: projection.aspect,
+        projection,
+        translate: translateProp || defaults.translate,
+        scale: scaleProp || defaults.scale,
+        aspect,
         width: WIDTH,
-        height: WIDTH * projection.aspect,
+        height,
       }}
     >
       <div
@@ -100,14 +82,14 @@ const Minimap = ({
         }}
       >
         <Regl
-          aspect={projection.aspect}
+          aspect={aspect}
           style={{
             pointerEvents: 'none',
             zIndex: -1,
           }}
         >
           <svg
-            viewBox={`0 0 ${WIDTH} ${WIDTH * projection.aspect}`}
+            viewBox={`0 0 ${WIDTH} ${height}`}
             style={{
               position: 'absolute',
               width: '100%',
