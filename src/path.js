@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react'
+import React, { useCallback, useEffect, useRef, useState } from 'react'
 import { geoPath } from 'd3-geo'
 import { feature as topoFeature } from 'topojson-client'
 import { useMinimap } from './minimap'
@@ -13,6 +13,7 @@ const Path = ({
 }) => {
   const ref = useRef(null)
   const [path, setPath] = useState()
+  const [initialized, setInitialized] = useState(false)
   const [data, setData] = useState()
   const {
     projection,
@@ -47,8 +48,6 @@ const Path = ({
       height,
     }
 
-    console.log(parent)
-
     const translate = [
       (parent.width - rect.width) / 2 +
         (2 * (translateProp[0] * width)) / Math.PI,
@@ -57,15 +56,20 @@ const Path = ({
     ]
 
     setTransform(`scale(${scale.join(' ')}) translate(${translate.join(' ')})`)
-  }, [projection, scaleProp, translateProp, width, height])
+  }, [initialized, projection, scaleProp, translateProp, width, height])
+
+  const pathRef = useCallback((node) => {
+    ref.current = node
+    setInitialized(true)
+  }, [])
 
   return (
     path && (
       <path
-        ref={ref}
+        ref={pathRef}
         d={path}
-        stroke={stroke}
-        fill={fill}
+        stroke={initialized ? stroke : 'none'}
+        fill={initialized ? fill : 'none'}
         opacity={opacity}
         strokeWidth={strokeWidth}
         transform={transform}
