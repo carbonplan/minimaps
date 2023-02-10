@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react'
+import React, { useEffect, useRef, useState } from 'react'
 import { geoPath } from 'd3-geo'
 import { feature as topoFeature } from 'topojson-client'
 import { useMinimap } from './minimap'
@@ -11,9 +11,17 @@ const Path = ({
   strokeWidth = 0.5,
   opacity = 0.7,
 }) => {
+  const ref = useRef(null)
   const [path, setPath] = useState()
   const [data, setData] = useState()
-  const { projection, scale, translate, width, height } = useMinimap()
+  const {
+    projection,
+    scale: scaleProp,
+    translate: translateProp,
+    width,
+    height,
+  } = useMinimap()
+  const [transform, setTransform] = useState(null)
 
   useEffect(() => {
     fetch(source)
@@ -27,35 +35,45 @@ const Path = ({
     setPath(geoPath(projection)(data))
   }, [data, projection])
 
-  const actualScale = [
-    (scale * (width / (2 * Math.PI))) / projection.scale(),
-    (scale * (height / Math.PI)) / projection.scale(),
-  ]
-  let actualTranslate = [
-    ((1 + translate[0]) * width) / 2 +
-      ((projection.translate()[0] / projection.scale()) * 2) / width,
-    ((1 + translate[1]) * height) / 2 +
-      ((projection.translate()[1] / projection.scale()) * 2) / height,
-  ]
-  // actualTranslate = [20, 3]
+  useEffect(() => {
+    const scale = [
+      (scaleProp * (width / (2 * Math.PI))) / projection.scale(),
+      (scaleProp * (height / Math.PI)) / projection.scale(),
+    ]
 
-  console.log('projected', projection.scale(), projection.translate())
-  console.log('props', scale, translate)
-  console.log('calculated', actualScale, actualTranslate)
+    const rect = ref.current?.getBoundingClientRect() ?? { width: 0, height: 0 }
+    const parent = ref.current?.parentElement?.getBoundingClientRect() ?? {
+      width,
+      height,
+    }
+
+    console.log(parent)
+
+    const translate = [
+      (parent.width - rect.width) / 2 +
+        (2 * (translateProp[0] * width)) / Math.PI,
+      (parent.height - rect.height) / 2 +
+        (2 * (translateProp[1] * height)) / Math.PI,
+    ]
+
+    setTransform(`scale(${scale.join(' ')}) translate(${translate.join(' ')})`)
+  }, [projection, scaleProp, translateProp, width, height])
+
   return (
-    <path
-      d={path}
-      stroke={stroke}
-      fill={fill}
-      opacity={opacity}
-      strokeWidth={strokeWidth}
-      transform={`scale(${actualScale.join(
-        ' '
-      )}) translate(${actualTranslate.join(' ')})`}
-      style={{
-        vectorEffect: 'non-scaling-stroke',
-      }}
-    />
+    path && (
+      <path
+        ref={ref}
+        d={path}
+        stroke={stroke}
+        fill={fill}
+        opacity={opacity}
+        strokeWidth={strokeWidth}
+        transform={transform}
+        style={{
+          vectorEffect: 'non-scaling-stroke',
+        }}
+      />
+    )
   )
 }
 
