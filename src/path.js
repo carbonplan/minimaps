@@ -42,20 +42,28 @@ const Path = ({
       (scaleProp * (height / Math.PI)) / projection.scale(),
     ]
 
-    const rect = ref.current?.getBoundingClientRect() ?? { width: 0, height: 0 }
-    const parent = ref.current?.parentElement?.getBoundingClientRect() ?? {
+    const {
+      x,
+      y,
+      width: bWidth,
+      height: bHeight,
+    } = ref.current?.getBBox() ?? {
+      x: 0,
+      y: 0,
       width,
       height,
     }
 
     const translate = [
-      (parent.width - rect.width) / 2 +
-        (2 * (translateProp[0] * width)) / Math.PI,
-      (parent.height - rect.height) / 2 +
-        (2 * (translateProp[1] * height)) / Math.PI,
+      (scale[0] - 1) * -x +
+        (width - scale[0] * bWidth) / 2 +
+        (translateProp[0] * width) / 2,
+      (scale[1] - 1) * -y +
+        (height - scale[1] * bHeight) / 2 +
+        (translateProp[1] * height) / 2,
     ]
 
-    setTransform(`scale(${scale.join(' ')}) translate(${translate.join(' ')})`)
+    setTransform(`translate(${translate.join(' ')}) scale(${scale.join(' ')})`)
   }, [initialized, projection, scaleProp, translateProp, width, height])
 
   const pathRef = useCallback((node) => {
