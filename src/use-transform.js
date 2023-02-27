@@ -10,6 +10,7 @@ const useTransform = () => {
     translate: translateProp,
     width,
     height,
+    aspect,
   } = useMinimap()
   const [transform, setTransform] = useState(null)
 
@@ -42,7 +43,8 @@ const useTransform = () => {
   useEffect(() => {
     const scale = [
       (scaleProp * (width / (2 * Math.PI))) / projection.scale(),
-      (scaleProp * (height / Math.PI)) / projection.scale(),
+      (scaleProp * ((height * (3 / 2 - aspect)) / Math.PI)) /
+        projection.scale(),
     ]
 
     const { x, y, width: bWidth, height: bHeight } = getBBox()
@@ -57,7 +59,7 @@ const useTransform = () => {
     ]
 
     setTransform(`translate(${translate.join(' ')}) scale(${scale.join(' ')})`)
-  }, [getBBox, projection, scaleProp, translateProp, width, height])
+  }, [getBBox, projection, scaleProp, translateProp, width, height, aspect])
 
   const componentRef = useCallback((node) => {
     ref.current = node
