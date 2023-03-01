@@ -13,6 +13,7 @@ const Path = ({
   opacity = 0.7,
 }) => {
   const [path, setPath] = useState()
+  const [sphere, setSphere] = useState()
   const [data, setData] = useState()
   const { projection } = useMinimap()
   const { ref, transform } = useTransform()
@@ -28,21 +29,27 @@ const Path = ({
   useEffect(() => {
     setPath(geoPath(projection)(data))
   }, [data, projection])
+  useEffect(() => {
+    setSphere(geoPath(projection)({ type: 'Sphere' }))
+  }, [data, projection])
 
   return (
-    path && (
-      <path
-        ref={ref}
-        d={path}
-        stroke={transform ? stroke : 'none'}
-        fill={transform ? fill : 'none'}
-        opacity={opacity}
-        strokeWidth={strokeWidth}
-        transform={transform}
-        style={{
-          vectorEffect: 'non-scaling-stroke',
-        }}
-      />
+    path &&
+    sphere && (
+      <>
+        <path
+          d={path}
+          stroke={transform ? stroke : 'none'}
+          fill={transform ? fill : 'none'}
+          opacity={opacity}
+          strokeWidth={strokeWidth}
+          transform={transform}
+          style={{
+            vectorEffect: 'non-scaling-stroke',
+          }}
+        />
+        <path fill='none' d={sphere} ref={ref} />
+      </>
     )
   )
 }
