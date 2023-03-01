@@ -52,10 +52,12 @@ const useTransform = () => {
     const translate = [
       (scale[0] - 1) * -x +
         (width - scale[0] * bWidth) / 2 +
-        (translateProp[0] * width) / 2,
+        (translateProp[0] * width) / 2 -
+        x,
       (scale[1] - 1) * -y +
         (height - scale[1] * bHeight) / 2 +
-        (translateProp[1] * height) / 2,
+        (translateProp[1] * height) / 2 -
+        y,
     ]
 
     setTransform(`translate(${translate.join(' ')}) scale(${scale.join(' ')})`)
