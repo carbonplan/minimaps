@@ -1,8 +1,10 @@
 import React, { useState, useEffect } from 'react'
 import { geoPath } from 'd3-geo'
 import { useMinimap } from './minimap'
+import useTransform from './use-transform'
 
 const Sphere = ({ fill, stroke, strokeWidth = 0.5, opacity = 0.2 }) => {
+  const { transform, ref } = useTransform()
   const { projection, width, height } = useMinimap()
   const [path, setPath] = useState()
   // replace with uui
@@ -19,7 +21,13 @@ const Sphere = ({ fill, stroke, strokeWidth = 0.5, opacity = 0.2 }) => {
     >
       <mask id={id}>
         <rect x='0' y='0' width='100%' height='100%' fill='#FFFFFF' />
-        <path fill='#000000' id='circle-cutout' d={path} />
+        <path
+          fill={transform ? '#000000' : 'none'}
+          id='circle-cutout'
+          d={path}
+          ref={ref}
+          transform={transform}
+        />
       </mask>
       <rect
         x='0'
@@ -27,18 +35,19 @@ const Sphere = ({ fill, stroke, strokeWidth = 0.5, opacity = 0.2 }) => {
         width='100%'
         height='100%'
         mask={`url(#${id})`}
-        style={{ fill: fill }}
+        style={{ fill: transform ? fill : 'none' }}
       />
       {stroke && (
         <path
           fill='none'
-          stroke={stroke}
+          stroke={transform ? stroke : 'none'}
           strokeWidth={strokeWidth}
           opacity={opacity}
           style={{
             vectorEffect: 'non-scaling-stroke',
           }}
           d={path}
+          transform={transform}
         />
       )}
     </svg>
