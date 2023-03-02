@@ -1,7 +1,8 @@
-import { MDXProvider } from '@mdx-js/react'
+import { MDXProvider, useMDXComponents } from '@mdx-js/react'
+import { useThemedStylesWithMdx } from '@theme-ui/mdx'
 import { useThemeUI, Box } from 'theme-ui'
 import { Layout, Row, Column } from '@carbonplan/components'
-import { Code, LiveCode, Pre } from '@carbonplan/prism'
+import { LiveCode } from '@carbonplan/prism'
 import { useThemedColormap } from '@carbonplan/colormaps'
 
 import * as minimaps from '@carbonplan/minimaps'
@@ -36,7 +37,7 @@ const Section = ({ children, name }) => {
   }
 
   const components = {
-    code: ({ ...props }) => (
+    pre: ({ ...props }) => (
       <LiveCode
         theme={'monochrome'}
         transform={transform}
@@ -44,11 +45,14 @@ const Section = ({ children, name }) => {
         {...props}
       />
     ),
-    pre: Pre,
   }
 
+  const componentsWithStyles = useThemedStylesWithMdx(
+    useMDXComponents(components)
+  )
+
   return (
-    <MDXProvider components={components}>
+    <MDXProvider components={componentsWithStyles}>
       <Layout
         title='Minimaps – CarbonPlan'
         description='Demo of our minimaps library.'

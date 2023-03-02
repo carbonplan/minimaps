@@ -13,7 +13,6 @@ Demo of our library for making small maps.
 </Minimap>
 ```
 
-<!-- prettier-ignore -->
 ```jsx live
 () => {
   const colormap = useThemedColormap('fire')
