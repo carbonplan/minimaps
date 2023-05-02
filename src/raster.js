@@ -408,8 +408,8 @@ const Raster = ({
     scale,
     translate[0],
     translate[1],
-    northPole?.at(0),
-    northPole?.at(1),
+    northPole ? northPole[0] : undefined,
+    northPole ? northPole[1] : undefined,
     nullValue,
     projection,
   ])
