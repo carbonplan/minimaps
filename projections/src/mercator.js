@@ -3,11 +3,11 @@ import { mercatorInvert, mercator } from 'glsl-geo-projection'
 
 export default function () {
   const projection = geoMercator().precision(0.1)
-  projection.glsl = { 
+  projection.glsl = {
     name: 'mercatorInvert',
-    func: mercatorInvert, 
+    func: mercatorInvert,
     nameForward: 'mercator',
-    funcForward: mercator
+    funcForward: mercator,
   }
   projection.id = 'mercator'
   return projection
