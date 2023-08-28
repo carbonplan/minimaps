@@ -1,9 +1,14 @@
 import { geoOrthographic } from 'd3-geo'
-import { orthographicInvert } from 'glsl-geo-projection'
+import { orthographicInvert, orthographic } from 'glsl-geo-projection'
 
 export default function () {
   const projection = geoOrthographic().precision(0.1)
-  projection.glsl = { func: orthographicInvert, name: 'orthographicInvert' }
+  projection.glsl = {
+    name: 'orthographicInvert',
+    func: orthographicInvert,
+    nameForward: 'orthographic',
+    funcForward: orthographic,
+  }
   projection.id = 'orthographic'
   return projection
 }
