@@ -5,7 +5,7 @@ import { useMinimap } from './minimap'
 const Points = ({
   position,
   value,
-  pointSize = 5,
+  size = 5,
   opacity = 1,
   colormap = null,
   clim = null,
@@ -54,7 +54,7 @@ const Points = ({
       bounds: regl.prop('bounds'),
       scale: regl.prop('scale'),
       translate: regl.prop('translate'),
-      pointSize: regl.prop('pointSize'),
+      size: regl.prop('size'),
       opacity: regl.prop('opacity'),
     }
 
@@ -77,7 +77,7 @@ const Points = ({
       attribute float value;
       uniform float scale;
       uniform vec2 translate;
-      uniform float pointSize;
+      uniform float size;
       const float pi = 3.14159265358979323846264;
       const float halfPi = pi * 0.5;
       varying float valuev;
@@ -86,7 +86,7 @@ const Points = ({
       void main() {
         valuev = value;
         vec2 location = ${projection.glsl.nameForward}(position.x, position.y);
-        gl_PointSize = pointSize;
+        gl_PointSize = size;
         gl_Position = vec4(location.x * scale / (halfPi * 2.0) + translate.x, location.y * scale / halfPi - translate.y, 0.0, 1.0);
       }
       `,
@@ -149,7 +149,7 @@ const Points = ({
         scale,
         clim,
         translate,
-        pointSize,
+        size,
         opacity,
         viewportWidth: viewport.width * pixelRatio,
         viewportHeight: viewport.height * pixelRatio,
@@ -180,7 +180,7 @@ const Points = ({
     value,
     projection,
     scale,
-    pointSize,
+    size,
     opacity,
     clim && clim[0],
     clim && clim[1],
