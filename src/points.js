@@ -9,7 +9,7 @@ const Points = ({
   opacity = 1,
   colormap = null,
   clim = null,
-  mode = 'lut'
+  mode = 'lut',
 }) => {
   const { viewport, regl } = useRegl()
   const { scale, translate, projection } = useMinimap()
@@ -55,16 +55,16 @@ const Points = ({
       scale: regl.prop('scale'),
       translate: regl.prop('translate'),
       pointSize: regl.prop('pointSize'),
-      opacity: regl.prop('opacity')
+      opacity: regl.prop('opacity'),
     }
 
-     if (mode === 'lut') {
-        uniforms = {
-          ...uniforms,
-          lut: regl.prop('lut'),
-          clim: regl.prop('clim'),
-        }
+    if (mode === 'lut') {
+      uniforms = {
+        ...uniforms,
+        lut: regl.prop('lut'),
+        clim: regl.prop('clim'),
       }
+    }
 
     draw.current = regl({
       vert: `
