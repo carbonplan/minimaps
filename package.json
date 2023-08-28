@@ -1,7 +1,7 @@
 {
   "name": "@carbonplan/minimaps",
   "type": "module",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "description": "small maps for figures",
   "main": "dst/index.cjs",
   "module": "dst/index.module.js",
@@ -48,7 +48,7 @@
   "prettier": "@carbonplan/prettier",
   "dependencies": {
     "d3-geo": "^2.0.1",
-    "glsl-geo-projection": "^1.1.0",
+    "glsl-geo-projection": "^1.1.1",
     "regl": "^2.1.0",
     "topojson-client": "^3.1.0",
     "zarr-js": "^2.1.3"

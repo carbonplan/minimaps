@@ -6,6 +6,6 @@
   "source": "src/index.js",
   "dependencies": {
     "d3-geo": "^2.0.1",
-    "glsl-geo-projection": "^1.1.0"
+    "glsl-geo-projection": "^1.1.1"
   }
 }
