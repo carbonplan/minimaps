@@ -7,7 +7,7 @@ export default function () {
     name: 'equirectangularInvert',
     func: equirectangularInvert,
     nameForward: 'equirectangular',
-    funcForward: equirectangular
+    funcForward: equirectangular,
   }
   projection.id = 'equirectangular'
   return projection
