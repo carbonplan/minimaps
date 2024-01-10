@@ -1,20 +1,18 @@
-<img
-  src='https://carbonplan-assets.s3.amazonaws.com/monogram/dark-small.png'
-  height='48'
-/>
+<p align="left" >
+<a href='https://carbonplan.org'>
+<picture>
+  <source media="(prefers-color-scheme: dark)" srcset="https://carbonplan-assets.s3.amazonaws.com/monogram/light-small.png">
+  <img alt="CarbonPlan monogram." height="48" src="https://carbonplan-assets.s3.amazonaws.com/monogram/dark-small.png">
+</picture>
+</a>
+</p>
 
 # carbonplan / minimaps
 
 **small maps for figures**
 
-[![GitHub][github-badge]][github]
-![MIT License][]
-![NPM Version][]
-
-[github]: https://github.com/carbonplan/maps
-[github-badge]: https://badgen.net/badge/-/github?icon=github&label
-[mit license]: https://badgen.net/badge/license/MIT/blue
-[npm version]: https://badgen.net/npm/v/@carbonplan/minimaps
+![NPM Version](https://img.shields.io/npm/v/@carbonplan/minimaps)
+[![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](https://opensource.org/licenses/MIT)
 
 This library makes it easy to generate small data-driven raster maps. It's a complement to our `@carbonplan/maps` library which is for making [interactive tiled maps](https://github.com/carbonplan/maps) that can be panned and zoomed. The use case here is figures and other static graphics where we don't need interactivity, where we can easily load the entire raster dataset we want to render, and where we often want to show the full globe.
 
@@ -106,8 +104,8 @@ For either type of raster data source, we can use any of the map projections in 
 
 ## license
 
-All the original code in this repository is [MIT](https://choosealicense.com/licenses/mit/) licensed. We request that you please provide attribution if reusing any of our digital content (graphics, logo, copy, etc.).
+All the original code in this repository is [MIT](https://choosealicense.com/licenses/mit/)-licensed. We request that you please provide attribution if reusing any of our digital content (graphics, logo, copy, etc.).
 
 ## about us
 
-CarbonPlan is a non-profit organization that uses data and science for climate action. We aim to improve the transparency and scientific integrity of climate solutions with open data and tools. Find out more at [carbonplan.org](https://carbonplan.org/) or get in touch by [opening an issue](https://github.com/carbonplan/minimaps/issues/new) or [sending us an email](mailto:hello@carbonplan.org).
+CarbonPlan is a nonprofit organization that uses data and science for climate action. We aim to improve the transparency and scientific integrity of climate solutions with open data and tools. Find out more at [carbonplan.org](https://carbonplan.org/) or get in touch by [opening an issue](https://github.com/carbonplan/minimaps/issues/new) or [sending us an email](mailto:hello@carbonplan.org).
