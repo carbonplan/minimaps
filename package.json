@@ -10,7 +10,7 @@
     "build": "npm-run-all --parallel build:*",
     "build:core": "rimraf dst && microbundle build --jsx React.createElement --jsxFragment React.Fragment -f modern,es,cjs",
     "build:projections": "rimraf projections/dst && microbundle --cwd projections --jsx React.createElement --jsxFragment React.Fragment -f modern,es,cjs ",
-    "watch": "microbundle watch --jsx React.createElement --jsxFragment React.Fragment -f modern,es,cjs"
+    "watch": "microbundle watch --jsx React.createElement --jsxFragment React.Fragment -f modern,es,cjs --sourcemap --no-compress"
   },
   "files": [
     "projections/dst",

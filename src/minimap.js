@@ -36,6 +36,22 @@ export const useMinimap = () => {
   return useContext(MinimapContext)
 }
 
+const resizeToAspectRatio = (containerWidth, aspectRatio) => {
+  const findDimensions = (width) => {
+    let height = aspectRatio * width
+    height = Math.round(height)
+    const recalculatedWidth = height / aspectRatio
+    if (Math.round(recalculatedWidth) === width) {
+      console.log('found', width, height)
+      return { adjustedWidth: width, adjustedHeight: height }
+    }
+
+    return findDimensions(width - 1)
+  }
+
+  return findDimensions(containerWidth)
+}
+
 const Minimap = ({
   id,
   tabIndex,
@@ -53,9 +69,36 @@ const Minimap = ({
     aspect: aspectProp,
     translate: translateProp,
   })
+  const [viewport, setViewport] = useState({ width: null, height: null })
+  const container = useRef(null)
+  const rounderRef = useRef(null)
+  const svgRef = useRef(null)
 
   const WIDTH = 800
 
+  const handleResize = () => {
+    if (
+      container.current &&
+      svgRef.current &&
+      rounderRef.current &&
+      projection.aspect
+    ) {
+      const containerWidth = container.current.offsetWidth
+      const roundedWidth = Math.floor(containerWidth)
+      const { adjustedWidth, adjustedHeight } = resizeToAspectRatio(
+        roundedWidth,
+        projection.aspect
+      )
+      rounderRef.current.style.height = adjustedHeight + 'px'
+      rounderRef.current.style.width = adjustedWidth + 'px'
+      svgRef.current.style.height = adjustedHeight + 'px'
+      svgRef.current.style.width = adjustedWidth + 'px'
+      setViewport({
+        height: adjustedHeight,
+        width: adjustedWidth,
+      })
+    }
+  }
   useEffect(() => {
     const updatedProjection = getProjection()
     const defaults = DEFAULTS[updatedProjection.id]
@@ -75,6 +118,11 @@ const Minimap = ({
       value: updatedProjection,
       translate: updatedTranslate,
     })
+    window.addEventListener('resize', handleResize)
+    handleResize() // Set initial size
+    return () => {
+      window.removeEventListener('resize', handleResize)
+    }
   }, [getProjection, scaleProp, aspectProp, translateProp])
 
   return (
@@ -89,6 +137,7 @@ const Minimap = ({
       }}
     >
       <div
+        ref={container}
         id={id}
         tabIndex={tabIndex}
         className={className}
@@ -99,27 +148,31 @@ const Minimap = ({
           ...style,
         }}
       >
-        <Regl
-          aspect={projection.aspect}
-          style={{
-            pointerEvents: 'none',
-            zIndex: -1,
-          }}
-        >
-          <svg
-            viewBox={`0 0 ${WIDTH} ${WIDTH * projection.aspect}`}
+        <div ref={rounderRef}>
+          <Regl
+            aspect={projection.aspect}
             style={{
-              position: 'absolute',
-              width: '100%',
-              top: 0,
-              left: 0,
-              overflow: 'hidden',
               pointerEvents: 'none',
+              zIndex: -1,
             }}
+            viewport={viewport}
           >
-            {children}
-          </svg>
-        </Regl>
+            <svg
+              ref={svgRef}
+              viewBox={`0 0 ${WIDTH} ${WIDTH * projection.aspect}`}
+              style={{
+                position: 'absolute',
+                width: '100%',
+                top: 0,
+                left: 0,
+                overflow: 'hidden',
+                pointerEvents: 'none',
+              }}
+            >
+              {children}
+            </svg>
+          </Regl>
+        </div>
       </div>
     </MinimapContext.Provider>
   )

@@ -13,27 +13,27 @@ export const useRegl = () => {
   return useContext(ReglContext)
 }
 
-const Regl = ({ style, aspect, children }) => {
+const Regl = ({ style, aspect, viewport, children }) => {
   const regl = useRef()
   const container = useRef(null)
   const resize = useRef()
   const [ready, setReady] = useState(false)
-  const [viewport, setViewport] = useState({ width: null, height: null })
+  // const [viewport, setViewport] = useState({ width: null, height: null })
 
   useEffect(() => {
-    resize.current = () => {
-      container.current.style.height =
-        container.current.offsetWidth * aspect + 'px'
+    // resize.current = () => {
+    //   container.current.style.height =
+    //     container.current.offsetWidth * aspect + 'px'
 
-      setViewport({
-        height: container.current.offsetWidth
-          ? container.current.offsetWidth * aspect
-          : container.current.style.height,
-        width: container.current.offsetWidth,
-      })
-    }
-    window.addEventListener('resize', resize.current)
-    resize.current()
+    //   setViewport({
+    //     height: container.current.offsetWidth
+    //       ? container.current.offsetWidth * aspect
+    //       : container.current.style.height,
+    //     width: container.current.offsetWidth,
+    //   })
+    // }
+    // window.addEventListener('resize', resize.current)
+    // resize.current()
 
     if (!regl.current) {
       regl.current = _regl({
@@ -43,10 +43,10 @@ const Regl = ({ style, aspect, children }) => {
       setReady(true)
     }
 
-    return () => {
-      window.removeEventListener('resize', resize.current)
-    }
-  }, [aspect])
+    // return () => {
+    //   window.removeEventListener('resize', resize.current)
+    // }
+  }, [])
 
   useEffect(() => {
     return () => {
@@ -62,7 +62,17 @@ const Regl = ({ style, aspect, children }) => {
         viewport,
       }}
     >
-      <div style={{ width: '100%', ...style }} ref={container} />
+      <div
+        style={{
+          width: viewport.width + 'px',
+          height: viewport.height + 'px',
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          ...style,
+        }}
+        ref={container}
+      />
       {ready && children}
     </ReglContext.Provider>
   )
