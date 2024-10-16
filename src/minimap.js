@@ -1,11 +1,6 @@
-import React, {
-  useState,
-  useEffect,
-  useRef,
-  createContext,
-  useContext,
-} from 'react'
+import React, { useState, useEffect, createContext, useContext } from 'react'
 import Regl from './regl'
+import ErrorBoundary from './error-boundary'
 
 const DEFAULTS = {
   naturalEarth1: {
@@ -99,27 +94,29 @@ const Minimap = ({
           ...style,
         }}
       >
-        <Regl
-          aspect={projection.aspect}
-          style={{
-            pointerEvents: 'none',
-            zIndex: -1,
-          }}
-        >
-          <svg
-            viewBox={`0 0 ${WIDTH} ${WIDTH * projection.aspect}`}
+        <ErrorBoundary>
+          <Regl
+            aspect={projection.aspect}
             style={{
-              position: 'absolute',
-              width: '100%',
-              top: 0,
-              left: 0,
-              overflow: 'hidden',
               pointerEvents: 'none',
+              zIndex: -1,
             }}
           >
-            {children}
-          </svg>
-        </Regl>
+            <svg
+              viewBox={`0 0 ${WIDTH} ${WIDTH * projection.aspect}`}
+              style={{
+                position: 'absolute',
+                width: '100%',
+                top: 0,
+                left: 0,
+                overflow: 'hidden',
+                pointerEvents: 'none',
+              }}
+            >
+              {children}
+            </svg>
+          </Regl>
+        </ErrorBoundary>
       </div>
     </MinimapContext.Provider>
   )
