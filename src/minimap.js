@@ -41,6 +41,7 @@ const Minimap = ({
   aspect: aspectProp,
   scale: scaleProp,
   translate: translateProp,
+  showErrorTrace = false,
 }) => {
   const [projection, setProjection] = useState({
     value: getProjection(),
@@ -94,7 +95,7 @@ const Minimap = ({
           ...style,
         }}
       >
-        <ErrorBoundary>
+        <ErrorBoundary showErrorTrace={showErrorTrace}>
           <Regl
             aspect={projection.aspect}
             style={{
