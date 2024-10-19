@@ -6,6 +6,7 @@ import React, {
   useRef,
 } from 'react'
 import _regl from 'regl'
+import webgl2Compat from './webgl2-compat'
 
 export const ReglContext = createContext(null)
 
@@ -36,11 +37,42 @@ const Regl = ({ style, aspect, children }) => {
     resize.current()
 
     if (!regl.current) {
-      regl.current = _regl({
-        container: container.current,
-        extensions: ['OES_texture_float', 'OES_element_index_uint'],
-      })
-      setReady(true)
+      const requiredExtensions = ['OES_texture_float', 'OES_element_index_uint']
+
+      try {
+        const canvas = document.createElement('canvas')
+        const context =
+          canvas.getContext('webgl') || canvas.getContext('experimental-webgl')
+        if (!context) {
+          throw new Error('WebGL is not supported in this browser.')
+        }
+        const missingExtensions = requiredExtensions.filter(
+          (ext) => !context.getExtension(ext)
+        )
+        canvas.remove()
+
+        if (missingExtensions.length > 0) {
+          console.log(
+            'using webgl2 compat due to missing extensions: ',
+            missingExtensions
+          )
+          regl.current = webgl2Compat.overrideContextType(() =>
+            _regl({
+              container: container.current,
+              extensions: requiredExtensions,
+            })
+          )
+        } else {
+          regl.current = _regl({
+            container: container.current,
+            extensions: requiredExtensions,
+          })
+        }
+        setReady(true)
+      } catch (err) {
+        console.error('Error initializing regl:', err)
+        throw err
+      }
     }
 
     return () => {
