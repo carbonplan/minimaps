@@ -8,7 +8,7 @@ export const datasets = {
   'seaweed_farming_costs.zarr':
     'https://storage.googleapis.com/carbonplan-macroalgae/data/processed/article/costs.zarr',
   'gcm_westus.zarr':
-    'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/westus/gcm-tasmax.zarr',
+    'https://carbonplan-cmip6.s3.us-west-2.amazonaws.com/vis/article/fig1/regions/westus/gcm-tasmax.zarr',
   'gcm_central-america.zarr':
-    'https://cmip6downscaling.blob.core.windows.net/vis/article/fig1/regions/central-america/gcm-tasmax.zarr',
+    'https://carbonplan-cmip6.s3.us-west-2.amazonaws.com/vis/article/fig1/regions/central-america/gcm-tasmax.zarr',
 }
