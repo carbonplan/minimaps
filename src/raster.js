@@ -68,7 +68,7 @@ const Raster = ({
   const invalidated = useRef(null)
 
   useEffect(() => {
-    regl.frame((_context) => {
+    const frame = regl.frame((_context) => {
       context.current = _context
 
       const canvas = regl._gl.canvas
@@ -96,6 +96,8 @@ const Raster = ({
       }
       invalidated.current = null
     })
+
+    return () => frame.cancel()
   }, [])
 
   useEffect(() => {
