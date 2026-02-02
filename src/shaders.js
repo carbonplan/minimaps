@@ -33,6 +33,7 @@ export const frag = (customFrag, projection, mode, transpose) => {
       uniform vec2 northPole;
       uniform bool transpose;
       uniform float nullValue;
+      uniform float aspect;
       ${mode === 'lut' ? 'uniform sampler2D lut;' : ''}
       ${mode === 'lut' ? 'uniform vec3 nullColor;' : ''}
 
@@ -98,13 +99,18 @@ export const frag = (customFrag, projection, mode, transpose) => {
         float x = gl_FragCoord.x / pixelRatio;
         float y = gl_FragCoord.y / pixelRatio;
 
-        vec2 delta = vec2((1.0 + translate.x) * width / 2.0, (1.0 - translate.y) * height / 2.0);        
+        // Use aspect-based height for consistent coordinate calculation
+        // This ensures translate values work correctly regardless of actual canvas aspect ratio
+        float effectiveHeight = width * aspect;
+        // Scale y to match the effective coordinate system
+        float yScaled = y * (effectiveHeight / height);
+        vec2 delta = vec2((1.0 + translate.x) * width / 2.0, (1.0 - translate.y) * effectiveHeight / 2.0);
 
         x = (x - delta.x) / (scale * (width / (pi * 2.0)));
         ${
           transpose
-            ? `y = (delta.y - y) / (scale * (width / (pi * 2.0)));`
-            : `y = (y - delta.y) / (scale * (width / (pi * 2.0)));`
+            ? `y = (delta.y - yScaled) / (scale * (width / (pi * 2.0)));`
+            : `y = (yScaled - delta.y) / (scale * (width / (pi * 2.0)));`
         }
 
         vec2 lookup = ${projection.glsl.name}(x, y);

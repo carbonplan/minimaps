@@ -46,8 +46,8 @@ const Raster = ({
   lat = 'lat',
   lon = 'lon',
 }) => {
-  const { viewport, regl } = useRegl()
-  const { scale, translate, projection } = useMinimap()
+  const { regl, viewport } = useRegl()
+  const { scale, translate, projection, aspect } = useMinimap()
 
   if (mode == 'lut' && !colormap) {
     throw new Error("must provide 'colormap' when using 'lut' mode")
@@ -71,13 +71,28 @@ const Raster = ({
     regl.frame((_context) => {
       context.current = _context
 
-      if (invalidated.current) {
+      const canvas = regl._gl.canvas
+      const dpr = _context.pixelRatio
+      const targetWidth = Math.round(canvas.clientWidth * dpr)
+      const targetHeight = Math.round(canvas.clientHeight * dpr)
+
+      let needsRedraw = !!invalidated.current
+
+      // Sync canvas buffer to display size and redraw on resize
+      if (targetWidth > 0 && targetHeight > 0) {
+        if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+          canvas.width = targetWidth
+          canvas.height = targetHeight
+          needsRedraw = true
+        }
+      }
+
+      if (needsRedraw && draw.current && isLoaded.current) {
         regl.clear({
           color: [0, 0, 0, 0],
           depth: 1,
         })
-
-        redraw.current(invalidated.current)
+        redraw.current()
       }
       invalidated.current = null
     })
@@ -107,6 +122,7 @@ const Raster = ({
       transpose: regl.prop('transpose'),
       nullValue: regl.prop('nullValue'),
       bounds: regl.prop('bounds'),
+      aspect: regl.prop('aspect'),
     }
 
     if (mode === 'lut') {
@@ -133,30 +149,30 @@ const Raster = ({
     })
   }, [customFrag, projection.glsl.name])
 
-  redraw.current = (invalidatedBy) => {
-    if (draw.current && isLoaded.current) {
-      const { pixelRatio } = context.current
-      draw.current({
-        texture: texture.current,
-        lut: lut.current,
-        bounds: boundsRef.current
-          ? [
-              boundsRef.current.lat[0],
-              boundsRef.current.lat[1],
-              boundsRef.current.lon[0],
-              boundsRef.current.lon[1],
-            ]
-          : [-90, 90, -180, 180],
-        scale,
-        translate,
-        northPole,
-        clim,
-        nullValue,
-        viewportWidth: viewport.width * pixelRatio,
-        viewportHeight: viewport.height * pixelRatio,
-        pixelRatio,
-      })
-    }
+  redraw.current = () => {
+    const canvas = regl._gl.canvas
+    const pixelRatio = context.current?.pixelRatio || 1
+    draw.current({
+      texture: texture.current,
+      lut: lut.current,
+      bounds: boundsRef.current
+        ? [
+            boundsRef.current.lat[0],
+            boundsRef.current.lat[1],
+            boundsRef.current.lon[0],
+            boundsRef.current.lon[1],
+          ]
+        : [-90, 90, -180, 180],
+      scale,
+      translate,
+      northPole,
+      clim,
+      nullValue,
+      aspect,
+      viewportWidth: canvas.width,
+      viewportHeight: canvas.height,
+      pixelRatio,
+    })
   }
 
   useEffect(() => {
