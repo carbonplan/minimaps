@@ -29,7 +29,7 @@ const Points = ({
   }
 
   useEffect(() => {
-    const frame = regl.frame((_context) => {
+    regl.frame((_context) => {
       context.current = _context
 
       const canvas = regl._gl.canvas
@@ -57,8 +57,6 @@ const Points = ({
       }
       invalidated.current = null
     })
-
-    return () => frame.cancel()
   }, [])
 
   useEffect(() => {
