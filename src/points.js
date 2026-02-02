@@ -29,19 +29,36 @@ const Points = ({
   }
 
   useEffect(() => {
-    regl.frame((_context) => {
+    const frame = regl.frame((_context) => {
       context.current = _context
 
-      if (invalidated.current) {
+      const canvas = regl._gl.canvas
+      const dpr = _context.pixelRatio
+      const targetWidth = Math.round(canvas.clientWidth * dpr)
+      const targetHeight = Math.round(canvas.clientHeight * dpr)
+
+      let needsRedraw = !!invalidated.current
+
+      // Sync canvas buffer to display size and redraw on resize
+      if (targetWidth > 0 && targetHeight > 0) {
+        if (canvas.width !== targetWidth || canvas.height !== targetHeight) {
+          canvas.width = targetWidth
+          canvas.height = targetHeight
+          needsRedraw = true
+        }
+      }
+
+      if (needsRedraw && draw.current) {
         regl.clear({
           color: [0, 0, 0, 0],
           depth: 1,
         })
-
-        redraw.current(invalidated.current)
+        redraw.current()
       }
       invalidated.current = null
     })
+
+    return () => frame.cancel()
   }, [])
 
   useEffect(() => {
@@ -138,24 +155,23 @@ const Points = ({
     })
   }, [projection.glsl.name])
 
-  redraw.current = (invalidatedBy) => {
-    if (draw.current) {
-      const { pixelRatio } = context.current
-      draw.current({
-        bounds: [-90, 90, -180, 180],
-        lut: lut.current,
-        position,
-        value,
-        scale,
-        clim,
-        translate,
-        size,
-        opacity,
-        viewportWidth: viewport.width * pixelRatio,
-        viewportHeight: viewport.height * pixelRatio,
-        pixelRatio,
-      })
-    }
+  redraw.current = () => {
+    const canvas = regl._gl.canvas
+    const pixelRatio = context.current?.pixelRatio || 1
+    draw.current({
+      bounds: [-90, 90, -180, 180],
+      lut: lut.current,
+      position,
+      value,
+      scale,
+      clim,
+      translate,
+      size,
+      opacity,
+      viewportWidth: canvas.width,
+      viewportHeight: canvas.height,
+      pixelRatio,
+    })
   }
 
   useEffect(() => {
