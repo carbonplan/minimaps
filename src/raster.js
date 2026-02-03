@@ -37,13 +37,10 @@ const FILL_SENTINEL = -3.4e4
 const HALF_FLOAT_MAX = 65504
 
 const needsNormalization = (nullValue, clim) => {
-  if (Math.abs(nullValue) > HALF_FLOAT_MAX) {
-    return true
-  }
-  if (clim && (Math.abs(clim[0]) > HALF_FLOAT_MAX || Math.abs(clim[1]) > HALF_FLOAT_MAX)) {
-    return true
-  }
-  return false
+  const largeNullValue = Math.abs(nullValue) > HALF_FLOAT_MAX
+  const largeClim =
+    clim && Math.max(Math.abs(clim[0]), Math.abs(clim[1])) > HALF_FLOAT_MAX
+  return largeNullValue || largeClim
 }
 
 const normalizeDataForTexture = (data, nullValue, scale) => {
