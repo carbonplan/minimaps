@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react'
+import React, { useState, useEffect, useRef, useMemo } from 'react'
 import { extname } from 'path'
 import { useRegl } from './regl'
 import { useMinimap } from './minimap'
@@ -30,6 +30,47 @@ const getBounds = ({ data, lat, lon }) => {
   }
 }
 
+// Mobile GPU precision fix: some GPUs can't handle large float values.
+// When values exceed half-float range, normalize data and use a sentinel fill value.
+
+const FILL_SENTINEL = -3.4e4
+const HALF_FLOAT_MAX = 65504
+
+const needsNormalization = (nullValue, clim) => {
+  const largeNullValue = Math.abs(nullValue) > HALF_FLOAT_MAX
+  const largeClim =
+    clim && Math.max(Math.abs(clim[0]), Math.abs(clim[1])) > HALF_FLOAT_MAX
+  return largeNullValue || largeClim
+}
+
+const normalizeBuffer = { current: null }
+
+const normalizeDataForTexture = (data, nullValue, scale) => {
+  if (!data?.data || !ArrayBuffer.isView(data.data)) {
+    return data
+  }
+
+  // Reuse buffer if same size for performance
+  if (
+    !normalizeBuffer.current ||
+    normalizeBuffer.current.length !== data.data.length
+  ) {
+    normalizeBuffer.current = new Float32Array(data.data.length)
+  }
+  const normalized = normalizeBuffer.current
+
+  for (let i = 0; i < data.data.length; i++) {
+    const v = data.data[i]
+    if (v === nullValue || Number.isNaN(v)) {
+      normalized[i] = FILL_SENTINEL
+    } else {
+      normalized[i] = v / scale
+    }
+  }
+
+  return { ...data, data: normalized }
+}
+
 const NORTH_POLE = [0, 90]
 
 const Raster = ({
@@ -57,6 +98,18 @@ const Raster = ({
     throw new Error("must provide 'clim' when using 'lut' mode")
   }
 
+  const shouldNormalize = useMemo(
+    () => needsNormalization(nullValue, clim),
+    [nullValue, clim && clim[0], clim && clim[1]]
+  )
+
+  const dataScale = useMemo(() => {
+    if (shouldNormalize && clim) {
+      return Math.max(Math.abs(clim[0]), Math.abs(clim[1]), 1)
+    }
+    return 1
+  }, [shouldNormalize, clim && clim[0], clim && clim[1]])
+
   const redraw = useRef()
   const draw = useRef()
   const texture = useRef()
@@ -65,6 +118,7 @@ const Raster = ({
   const isLoaded = useRef(false)
   const boundsRef = useRef(null)
   const zarrGroupCache = useRef()
+  const zarrArrayCache = useRef()
   const invalidated = useRef(null)
 
   useEffect(() => {
@@ -96,7 +150,6 @@ const Raster = ({
       }
       invalidated.current = null
     })
-
   }, [])
 
   useEffect(() => {
@@ -124,6 +177,7 @@ const Raster = ({
       nullValue: regl.prop('nullValue'),
       bounds: regl.prop('bounds'),
       aspect: regl.prop('aspect'),
+      dataScale: regl.prop('dataScale'),
     }
 
     if (mode === 'lut') {
@@ -168,20 +222,29 @@ const Raster = ({
       translate,
       northPole,
       clim,
-      nullValue,
+      nullValue: shouldNormalize ? FILL_SENTINEL : nullValue,
       aspect,
+      dataScale,
       viewportWidth: canvas.width,
       viewportHeight: canvas.height,
       pixelRatio,
     })
   }
 
+  const uploadTexture = (data) => {
+    if (!data) return
+    texture.current(
+      shouldNormalize
+        ? normalizeDataForTexture(data, nullValue, dataScale)
+        : data
+    )
+    invalidated.current = 'on texture upload'
+  }
+
   useEffect(() => {
-    // handle loading asynchronously from a specified path
     if (typeof source === 'string') {
       const ext = extname(source)
 
-      // handle images
       if (['.png', '.jpg', '.jpeg'].includes(ext)) {
         const image = document.createElement('img')
         image.src = source
@@ -195,56 +258,54 @@ const Raster = ({
         }
       }
 
-      // handle zarr groups and arrays
       if (ext === '.zarr') {
         if (variable) {
           zarr().loadGroup(source, (error, data, metadata) => {
             validateGroup(data, variable)
-
             if (!bounds && data[lat] && data[lon]) {
               boundsRef.current = getBounds({ data, lat, lon })
             }
             zarrGroupCache.current = data
+            zarrArrayCache.current = null
             isLoaded.current = true
-            texture.current(zarrGroupCache.current[variable])
-            invalidated.current = 'on zarr group load'
+            uploadTexture(data[variable])
           })
         } else {
           zarr().load(source, (error, data) => {
+            zarrArrayCache.current = data
+            zarrGroupCache.current = null
             isLoaded.current = true
-            texture.current(data)
-            invalidated.current = 'on zarr array load'
+            uploadTexture(data)
           })
         }
       }
-      // handle loading synchronously from pre-fetched zarr data
     } else {
       if (variable) {
         validateGroup(source, variable)
-
         if (!bounds && source[lat] && source[lon]) {
           boundsRef.current = getBounds({ data: source, lat, lon })
         }
-
         zarrGroupCache.current = source
+        zarrArrayCache.current = null
         isLoaded.current = true
-        texture.current(zarrGroupCache.current[variable])
-        invalidated.current = 'on zarr group read'
+        uploadTexture(source[variable])
       } else {
+        zarrArrayCache.current = source
+        zarrGroupCache.current = null
         isLoaded.current = true
-        texture.current(source)
-        invalidated.current = 'on zarr array read'
+        uploadTexture(source)
       }
     }
   }, [source, lat, lon])
 
   useEffect(() => {
-    // handle variable change on cached zarr group data
-    if (zarrGroupCache.current) {
-      texture.current(zarrGroupCache.current[variable])
-      invalidated.current = 'on variable change'
+    if (!isLoaded.current) return
+    if (zarrGroupCache.current && variable) {
+      uploadTexture(zarrGroupCache.current[variable])
+    } else if (zarrArrayCache.current) {
+      uploadTexture(zarrArrayCache.current)
     }
-  }, [variable])
+  }, [variable, shouldNormalize, nullValue, dataScale])
 
   useEffect(() => {
     if (bounds) {

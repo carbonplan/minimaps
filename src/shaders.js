@@ -34,6 +34,7 @@ export const frag = (customFrag, projection, mode, transpose) => {
       uniform bool transpose;
       uniform float nullValue;
       uniform float aspect;
+      uniform float dataScale;
       ${mode === 'lut' ? 'uniform sampler2D lut;' : ''}
       ${mode === 'lut' ? 'uniform vec3 nullColor;' : ''}
 
@@ -86,7 +87,7 @@ export const frag = (customFrag, projection, mode, transpose) => {
           gl_FragColor = vec4(c.x, c.y, c.z, 1.0);
           `
   } else if (mode === 'rgb') {
-    inner = 'gl_FragColor = vec4(value.x , value.y, value.z, 1.0);'
+    inner = 'gl_FragColor = vec4(value.x, value.y, value.z, 1.0);'
   }
 
   return `
@@ -147,6 +148,7 @@ export const frag = (customFrag, projection, mode, transpose) => {
         if ((!inboundsY || !inboundsX) || (value.x == nullValue || isnan(value.x))) {
           gl_FragColor = vec4(0.0, 0.0, 0.0, 0.0);
         } else {
+          value = value * dataScale;
           ${inner}
         }
       }
