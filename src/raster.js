@@ -43,12 +43,22 @@ const needsNormalization = (nullValue, clim) => {
   return largeNullValue || largeClim
 }
 
+const normalizeBuffer = { current: null }
+
 const normalizeDataForTexture = (data, nullValue, scale) => {
   if (!data?.data || !ArrayBuffer.isView(data.data)) {
     return data
   }
 
-  const normalized = new Float32Array(data.data.length)
+  // Reuse buffer if same size for performance
+  if (
+    !normalizeBuffer.current ||
+    normalizeBuffer.current.length !== data.data.length
+  ) {
+    normalizeBuffer.current = new Float32Array(data.data.length)
+  }
+  const normalized = normalizeBuffer.current
+
   for (let i = 0; i < data.data.length; i++) {
     const v = data.data[i]
     if (v === nullValue || Number.isNaN(v)) {
