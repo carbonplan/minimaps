@@ -30,91 +30,20 @@ const getBounds = ({ data, lat, lon }) => {
   }
 }
 
-// Mobile GPU precision fix: some GPUs can't handle large fill values (e.g. 9.96...e36).
-// On low-precision GPUs, we normalize data and use a sentinel fill value instead.
+// Mobile GPU precision fix: some GPUs can't handle large float values.
+// When values exceed half-float range, normalize data and use a sentinel fill value.
 
 const FILL_SENTINEL = -3.4e4
 const HALF_FLOAT_MAX = 65504
-let gpuPrecisionTestResult = null
 
-// Test GPU precision: (4096 + 1) - 4096 should equal 1 on highp, 0 on mediump
-const testGpuPrecision = (regl) => {
-  if (gpuPrecisionTestResult !== null) {
-    return gpuPrecisionTestResult
+const needsNormalization = (nullValue, clim) => {
+  if (Math.abs(nullValue) > HALF_FLOAT_MAX) {
+    return true
   }
-
-  try {
-    const fbo = regl.framebuffer({
-      width: 1,
-      height: 1,
-      colorFormat: 'rgba',
-    })
-
-    const testDraw = regl({
-      frag: `
-        #ifdef GL_FRAGMENT_PRECISION_HIGH
-        precision highp float;
-        #else
-        precision mediump float;
-        #endif
-        uniform float u;
-        void main() {
-          float t = (u + 1.0) - u;
-          float pass = t > 0.5 ? 1.0 : 0.0;
-          gl_FragColor = vec4(pass, 0.0, 0.0, 1.0);
-        }
-      `,
-      vert: `
-        precision highp float;
-        attribute vec2 position;
-        void main() {
-          gl_Position = vec4(position, 0, 1);
-        }
-      `,
-      attributes: {
-        position: [
-          [-1, -1],
-          [1, -1],
-          [-1, 1],
-          [-1, 1],
-          [1, -1],
-          [1, 1],
-        ],
-      },
-      uniforms: {
-        u: 4096.0,
-      },
-      count: 6,
-      framebuffer: fbo,
-    })
-
-    testDraw()
-
-    const pixels = regl.read({ framebuffer: fbo })
-    fbo.destroy()
-
-    const supportsHighPrecision = pixels[0] > 128
-    gpuPrecisionTestResult = supportsHighPrecision
-    return supportsHighPrecision
-  } catch (e) {
-    gpuPrecisionTestResult = false
-    return false
+  if (clim && (Math.abs(clim[0]) > HALF_FLOAT_MAX || Math.abs(clim[1]) > HALF_FLOAT_MAX)) {
+    return true
   }
-}
-
-const needsNormalization = (nullValue, clim, regl) => {
-  const largeNullValue = Math.abs(nullValue) > HALF_FLOAT_MAX
-  const largeClim =
-    clim &&
-    (Math.abs(clim[0]) > HALF_FLOAT_MAX || Math.abs(clim[1]) > HALF_FLOAT_MAX)
-
-  if (!largeNullValue && !largeClim) {
-    return false
-  }
-  if (testGpuPrecision(regl)) {
-    return false
-  }
-  return true
+  return false
 }
 
 const normalizeDataForTexture = (data, nullValue, scale) => {
@@ -163,8 +92,8 @@ const Raster = ({
   }
 
   const shouldNormalize = useMemo(
-    () => needsNormalization(nullValue, clim, regl),
-    [nullValue, clim && clim[0], clim && clim[1], regl]
+    () => needsNormalization(nullValue, clim),
+    [nullValue, clim && clim[0], clim && clim[1]]
   )
 
   const dataScale = useMemo(() => {
